@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_cleaning">
+
+    <fragment
+        android:id="@+id/nav_cleaning"
+        android:name="de.sowrong.together.ui.cleaning.CleaningFragment"
+        android:label="@string/tab_cleaning"
+        tools:layout="@layout/fragment_tasks_cleaning">
+
+        <action
+            android:id="@+id/action_Cleaning_to_Calendar"
+            app:destination="@id/nav_calendar" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_calendar"
+        android:name="de.sowrong.together.ui.calendar.CalendarFragment"
+        android:label="@string/tab_calendar"
+        tools:layout="@layout/fragment_tasks_calendar">
+
+        <action
+            android:id="@+id/action_Calendar_to_Wallet"
+            app:destination="@id/nav_wallet" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_wallet"
+        android:name="de.sowrong.together.ui.wallet.WalletFragment"
+        android:label="@string/tab_wallet"
+        tools:layout="@layout/fragment_tasks_wallet">
+
+        <action
+            android:id="@+id/action_Wallet_to_ShoppingList"
+            app:destination="@id/nav_shopping_list" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_shopping_list"
+        android:name="de.sowrong.together.ui.shoppingList.ShoppingListFragment"
+        android:label="@string/tab_shopping_list"
+        tools:layout="@layout/fragment_tasks_shopping_list">
+
+        <action
+            android:id="@+id/action_shoppingList_to_cleaning"
+            app:destination="@id/nav_cleaning" />
+    </fragment>
+</navigation>
