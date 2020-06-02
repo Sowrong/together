@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "436698030706",
+    "firebase_url": "https://de-sowrong-together.firebaseio.com",
+    "project_id": "de-sowrong-together",
+    "storage_bucket": "de-sowrong-together.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:436698030706:android:37e976393f0859ab5058eb",
+        "android_client_info": {
+          "package_name": "de.sowrong.together"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "436698030706-mhirtdivkd7i923piogqdqs22i9eoctj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwLgPUqAIi2G_UjlJNzhcnH9_-kiBkM7s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "436698030706-mhirtdivkd7i923piogqdqs22i9eoctj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
