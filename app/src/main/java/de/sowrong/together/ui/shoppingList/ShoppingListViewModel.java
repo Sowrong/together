@@ -4,16 +4,23 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-public class ShoppingListViewModel extends ViewModel {
+import java.util.HashMap;
 
-    private MutableLiveData<String> mText;
+import de.sowrong.together.data.Group;
+import de.sowrong.together.data.Member;
+import de.sowrong.together.data.ShoppingList;
+import de.sowrong.together.data.ShoppingListEntry;
+
+public class ShoppingListViewModel extends ViewModel {
+    private MutableLiveData<HashMap<String, ShoppingListEntry>> shoppingList;
 
     public ShoppingListViewModel() {
-        mText = new MutableLiveData<>();
-        mText.setValue("This is the shopping list fragment");
+        shoppingList = new MutableLiveData<>();
+        shoppingList.setValue(ShoppingList.getInstance().getShoppingListMap());
+        Group.getInstance().addShoppingListDataChangedListeners(shoppingList::setValue);
     }
 
-    public LiveData<String> getText() {
-        return mText;
+    public LiveData<HashMap<String, ShoppingListEntry>> getShoppingList() {
+        return shoppingList;
     }
 }

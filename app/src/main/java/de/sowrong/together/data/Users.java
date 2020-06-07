@@ -107,7 +107,6 @@ public class Users {
         return instance;
     }
 
-
     public void addUserDataChangedListeners(UserDataListener listener) {
         // Add the listener to the list of registered listeners
         listeners.add(listener);

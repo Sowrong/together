@@ -1,26 +1,88 @@
 package de.sowrong.together.data;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import android.util.Log;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 
 public class Member {
+    private static final String MEMBER_TAG = "data/Member";
+    private String id;
+    private String name;
+    private String groupId;
+    private double balance;
 
-    private static ArrayList<MemberDataListener> listeners;
+    public Member(String id, String name, String groupId) {
+        this.id = id;
+        this.name = name;
+        this.groupId = groupId;
 
-
-    public void addMemberDataChangedListeners(MemberDataListener listener) {
-        // Add the listener to the list of registered listeners
-        listeners.add(listener);
+        FirebaseDatabase db = FirebaseDatabase.getInstance();
+        db.getReference().child("groups").orderByKey().equalTo(groupId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot != null) {
+                    for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
+                        if (childSnapshot.getKey().equals("members")) {
+                            for (DataSnapshot memberSnapshot : childSnapshot.getChildren()) {
+                                if (memberSnapshot.getKey().equals(id)) {
+                                    for (DataSnapshot memberDataSnapshot : memberSnapshot.getChildren()) {
+                                        if (memberDataSnapshot.getKey().equals("balance")) {
+                                            balance = Double.parseDouble((String) memberDataSnapshot.getValue());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.e(MEMBER_TAG, "failed to read user balance", error.toException());
+            }
+        });
     }
-    public void removeMemberDataChangedListeners(MemberDataListener listener) {
-        // Remove the listener from the list of the registered listeners
-        listeners.remove(listener);
+
+    public Member(String id, String name, String groupId, double balance) {
+        this.id = id;
+        this.name = name;
+        this.groupId = groupId;
+        this.balance = balance;
     }
 
-    protected void notifyMemberDataChangedListeners(HashMap<String, Member> memberDataList) {
-        // Notify each of the listeners in the list of registered listeners
-        for (MemberDataListener listener: this.listeners) {
-            listener.onMemberDataChanged(memberDataList);
-        }
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
     }
 }

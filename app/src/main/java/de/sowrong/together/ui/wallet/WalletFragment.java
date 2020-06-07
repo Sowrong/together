@@ -16,16 +16,14 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener;
 import java.util.Map;
 
 import de.sowrong.together.R;
-import de.sowrong.together.data.User;
-import de.sowrong.together.data.Users;
+import de.sowrong.together.data.Group;
+import de.sowrong.together.data.Member;
 
 public class WalletFragment extends Fragment implements OnRefreshListener {
-
     private ViewGroup walletGroup;
     private WalletViewModel model;
     private TextView textViewOwnBalance;
     private SwipeRefreshLayout swipeRefreshLayout;
-    private String userId;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -34,30 +32,27 @@ public class WalletFragment extends Fragment implements OnRefreshListener {
         textViewOwnBalance = root.findViewById(R.id.ownBalancePig);
         model = ViewModelProviders.of(requireActivity()).get(WalletViewModel.class);
 
-        userId = Users.getOwnId();
+        model.getMembers().observe(this, membersMap -> {
 
-        model.getUsers().observe(this, usersMap -> {
+            String userId = Group.getInstance().getOwnUserId();
+
             Log.d("WalletFragment", "called observe");
-
-
-            Log.d("WalletFragment", "#elements: " + usersMap.size());
+            Log.d("WalletFragment", "#elements: " + membersMap.size());
             Log.d("WalletFragment", "userId: " + userId);
 
-            if (usersMap.isEmpty() || !usersMap.containsKey(userId))
+            if (membersMap.isEmpty() || !membersMap.containsKey(userId))
                 return;
 
-
-            setTextViewToBalance(textViewOwnBalance, usersMap.get(userId).getBalance());
-
+            setTextViewToBalance(textViewOwnBalance, membersMap.get(userId).getBalance());
 
             walletGroup = root.findViewById(R.id.walletDetailItems);
             walletGroup.removeAllViews();
 
-            for (Map.Entry<String, User> entry : usersMap.entrySet()) {
-                User user = entry.getValue();
-                walletGroup.addView(createWalletItem(inflater, user.getName(), user.getBalance()));
+            for (Map.Entry<String, Member> entry : membersMap.entrySet()) {
+                Member member = entry.getValue();
+                walletGroup.addView(createWalletItem(inflater, member.getName(), member.getBalance()));
 
-                Log.d("WalletFragment", "creating entry for user " + user.getName());
+                Log.d("WalletFragment", "creating entry for user " + member.getName());
             }
         });
 

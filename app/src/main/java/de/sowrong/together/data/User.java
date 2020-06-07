@@ -15,7 +15,6 @@ public class User {
         this.id = id;
         this.groupId = groupId;
         this.name = name;
-        this.balance = 0.0f;
     }
 
     public String getId() {
@@ -41,8 +40,4 @@ public class User {
     public void setGroupId(String groupId) {
         this.groupId = groupId;
     }
-
-    public double getBalance() { return balance; }
-
-    public void setBalance(double balance) { this.balance = balance; }
 }
