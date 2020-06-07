@@ -5,6 +5,7 @@ import android.util.Log;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -21,9 +22,8 @@ public class Members {
         listeners = new ArrayList<>();
     }
 
-    void addMember(String id, Double balance) {
-        FirebaseDatabase db = FirebaseDatabase.getInstance();
-        db.getReference().child("users").orderByKey().equalTo(id).addListenerForSingleValueEvent(new ValueEventListener() {
+    ValueEventListener getMemberEventListener(String userId, Double userBalance) {
+        return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot != null) {
@@ -31,7 +31,7 @@ public class Members {
                         String name = "";
                         String groupId = "";
 
-                        if (id.equals(childSnapshot.getKey())) {
+                        if (userId.equals(childSnapshot.getKey())) {
                             for (DataSnapshot userDetailSnapshot : childSnapshot.getChildren()) {
                                 switch (userDetailSnapshot.getKey()) {
                                     case "name":
@@ -43,17 +43,11 @@ public class Members {
                                 }
                             }
 
-                            Log.d(MEMBERS_TAG, "userId: " + id + ", name: " + name + ", groupId: " + groupId);
+                            Log.d(MEMBERS_TAG, "userId: " + userId + ", name: " + name + ", groupId: " + groupId);
                         }
 
-                        if (balance == null) {
-                            Member member = new Member(id, name, groupId);
-                            membersMap.put(id, member);
-                        }
-                        else {
-                            Member member = new Member(id, name, groupId, balance);
-                            membersMap.put(id, member);
-                        }
+                        Member member = new Member(userId, name, groupId, userBalance);
+                        membersMap.put(userId, member);
 
                         notifyMemberDataChangedListeners(membersMap);
                     }
@@ -63,20 +57,18 @@ public class Members {
             public void onCancelled(DatabaseError error) {
                 Log.e(MEMBERS_TAG, "failed to read user and group id", error.toException());
             }
-        });
+        };
     }
 
-    void populate(Group group) {
-        FirebaseDatabase db = FirebaseDatabase.getInstance();
-
-        db.getReference().child("groups").orderByKey().equalTo(group.getGroupId()).addListenerForSingleValueEvent(new ValueEventListener() {
+    ValueEventListener getBalanceEventListener(String groupId) {
+        return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot != null) {
                     for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                        if ((childSnapshot.getKey().equals(group.getGroupId()))) {
+                        if ((childSnapshot.getKey().equals(groupId))) {
                             for (DataSnapshot groupSnapshot : childSnapshot.getChildren()) {
-                                if (groupSnapshot.getKey().equals("members")) {
+                                if (groupSnapshot.getKey().equals("balances")) {
                                     for (DataSnapshot memberSnapshot : groupSnapshot.getChildren()) {
                                         String id = memberSnapshot.getKey();
                                         Double balance = null;
@@ -85,7 +77,9 @@ public class Members {
                                                 balance = Double.parseDouble((String) memberDataSnapshot.getValue());
                                             }
                                         }
-                                        addMember(id, balance);
+
+                                        if (balance != null)
+                                            addMember(id, balance);
                                     }
                                 }
                             }
@@ -97,7 +91,25 @@ public class Members {
             public void onCancelled(DatabaseError error) {
                 Log.e(MEMBERS_TAG, "failed to read user and group id", error.toException());
             }
-        });
+        };
+    }
+
+    void addMember(String userId, Double userBalance) {
+        Query databaseQuery = FirebaseDatabase.getInstance().getReference().child("users").orderByKey().equalTo(userId);
+        ValueEventListener memberEventListener = getMemberEventListener(userId, userBalance);
+
+        databaseQuery.addListenerForSingleValueEvent(memberEventListener);
+        databaseQuery.addValueEventListener(memberEventListener);
+    }
+
+    void populate(Group group) {
+        String groupId = group.getGroupId();
+
+        Query databaseQuery = FirebaseDatabase.getInstance().getReference().child("groups").orderByKey().equalTo(groupId);
+        ValueEventListener valueEventListener = getBalanceEventListener(groupId);
+
+        databaseQuery.addListenerForSingleValueEvent(valueEventListener);
+        databaseQuery.addValueEventListener(valueEventListener);
     }
 
     public static Members getInstance() {

@@ -15,38 +15,6 @@ public class Member {
     private String groupId;
     private double balance;
 
-    public Member(String id, String name, String groupId) {
-        this.id = id;
-        this.name = name;
-        this.groupId = groupId;
-
-        FirebaseDatabase db = FirebaseDatabase.getInstance();
-        db.getReference().child("groups").orderByKey().equalTo(groupId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot != null) {
-                    for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                        if (childSnapshot.getKey().equals("members")) {
-                            for (DataSnapshot memberSnapshot : childSnapshot.getChildren()) {
-                                if (memberSnapshot.getKey().equals(id)) {
-                                    for (DataSnapshot memberDataSnapshot : memberSnapshot.getChildren()) {
-                                        if (memberDataSnapshot.getKey().equals("balance")) {
-                                            balance = Double.parseDouble((String) memberDataSnapshot.getValue());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e(MEMBER_TAG, "failed to read user balance", error.toException());
-            }
-        });
-    }
-
     public Member(String id, String name, String groupId, double balance) {
         this.id = id;
         this.name = name;

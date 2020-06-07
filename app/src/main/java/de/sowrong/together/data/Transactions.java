@@ -5,6 +5,7 @@ import android.util.Log;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -28,15 +29,13 @@ public class Transactions {
         return instance;
     }
 
-    void populate(Group group) {
-        FirebaseDatabase db = FirebaseDatabase.getInstance();
-
-        db.getReference().child("groups").orderByKey().equalTo(group.getGroupId()).addListenerForSingleValueEvent(new ValueEventListener() {
+    ValueEventListener getTransactionEventListener(String groupId) {
+        return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot != null) {
                     for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                        if ((childSnapshot.getKey().equals(group.getGroupId()))) {
+                        if ((childSnapshot.getKey().equals(groupId))) {
                             for (DataSnapshot groupSnapshot : childSnapshot.getChildren()) {
                                 if (groupSnapshot.getKey().equals("transactions")) {
                                     for (DataSnapshot transactionsSnapshot : groupSnapshot.getChildren()) {
@@ -78,7 +77,15 @@ public class Transactions {
             public void onCancelled(DatabaseError error) {
                 Log.e(TRANSACTIONS_TAG, "failed to read transactions data", error.toException());
             }
-        });
+        };
+    }
+
+    void populate(Group group) {
+        String groupId = group.getGroupId();
+        Query databaseQuery = FirebaseDatabase.getInstance().getReference().child("groups").orderByKey().equalTo(groupId);
+
+        databaseQuery.addListenerForSingleValueEvent(getTransactionEventListener(groupId));
+        databaseQuery.addValueEventListener(getTransactionEventListener(groupId));
     }
 
     public static HashMap<String, Transaction> getShoppingListMap() {

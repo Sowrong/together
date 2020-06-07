@@ -5,6 +5,7 @@ import android.util.Log;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -32,15 +33,13 @@ public class Calendar {
         return calendarMap;
     }
 
-    void populate(Group group) {
-        FirebaseDatabase db = FirebaseDatabase.getInstance();
-
-        db.getReference().child("groups").orderByKey().equalTo(group.getGroupId()).addListenerForSingleValueEvent(new ValueEventListener() {
+    ValueEventListener getCalendarEventListener(String groupId) {
+        return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot != null) {
                     for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                        if ((childSnapshot.getKey().equals(group.getGroupId()))) {
+                        if ((childSnapshot.getKey().equals(groupId))) {
                             for (DataSnapshot groupSnapshot : childSnapshot.getChildren()) {
                                 if (groupSnapshot.getKey().equals("calendar")) {
                                     for (DataSnapshot calendarEntrySnapshot : groupSnapshot.getChildren()) {
@@ -82,7 +81,16 @@ public class Calendar {
             public void onCancelled(DatabaseError error) {
                 Log.e(CALENDAR_TAG, "failed to read calendar data", error.toException());
             }
-        });
+        };
+    }
+
+    void populate(Group group) {
+        String groupId = group.getGroupId();
+
+        Query databaseQuery = FirebaseDatabase.getInstance().getReference().child("groups").orderByKey().equalTo(groupId);
+
+        databaseQuery.addListenerForSingleValueEvent(getCalendarEventListener(groupId));
+        databaseQuery.addValueEventListener(getCalendarEventListener(groupId));
     }
 
     public void addCalendarDataChangedListeners(CalendarDataListener listener) {
