@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Menu;
 import android.view.animation.AccelerateInterpolator;
@@ -71,6 +72,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        Menu mainMenu = findViewById(R.id.main_menu);
+
 
         previousTabPosition = TAB_CLEANING;
 
@@ -196,6 +200,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.action_logout:
+                signOutAccount();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
     public void createSignInIntent() {
         List<AuthUI.IdpConfig> providers = Arrays.asList(
                 //new AuthUI.IdpConfig.PhoneBuilder().build(),
@@ -210,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
                         .createSignInIntentBuilder()
                         .setAvailableProviders(providers)
                         .setLogo(R.drawable.ic_logo)      // Set logo drawable
-                        .setTheme(R.style.AppTheme)      // Set theme
+                        .setTheme(R.style.LoginTheme)      // Set theme
                         .build(),
                 RC_SIGN_IN);
     }
