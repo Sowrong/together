@@ -33,6 +33,8 @@ import de.sowrong.together.data.Cleaning;
 import de.sowrong.together.data.CleaningWeek;
 import de.sowrong.together.data.CleaningWeekUserTask;
 import de.sowrong.together.data.Duty;
+import de.sowrong.together.data.Member;
+import de.sowrong.together.data.Members;
 import de.sowrong.together.data.User;
 import de.sowrong.together.data.Users;
 import de.sowrong.together.ui.calendar.CalendarViewModel;
@@ -46,6 +48,7 @@ public class CleaningFragment extends Fragment {
 
     private Users users;
     private CleaningViewModel model;
+    private HashMap<String, Member> membersMap;
     private HashMap<String, CleaningWeek> cleaningMap;
     private HashMap<String, ArrayList<Duty>> dutiesMap;
 
@@ -67,6 +70,11 @@ public class CleaningFragment extends Fragment {
         Context context = getActivity().getApplicationContext();
 
         model = ViewModelProviders.of(this).get(CleaningViewModel.class);
+
+        model.getMembers().observe(this, membersMap -> {
+            this.membersMap = membersMap;
+            redrawCleaningList(root, inflater, context, calendarWeek);
+        });
 
         model.getCleaning().observe(this, cleaningMap -> {
             this.cleaningMap = cleaningMap;
@@ -103,7 +111,7 @@ public class CleaningFragment extends Fragment {
 
 
     private void redrawCleaningList(View root, @NonNull LayoutInflater inflater, Context context, String calendarWeek) {
-        if (cleaningMap.isEmpty())
+        if (cleaningMap == null || cleaningMap.isEmpty())
             return;
 
         cleaningGroup.removeAllViews();
@@ -116,20 +124,21 @@ public class CleaningFragment extends Fragment {
                     ArrayList<CleaningWeekUserTask> userTasks = selectedWeekData.getValue().getUserTasks();
                     for (CleaningWeekUserTask userTask: userTasks) {
                         if (dutiesMap.size() > 0 && dutiesMap.containsKey(userTask.getDutyId())) {
-                            // TODO use all duties icons and names
+                            // TODO use duty names
                             ArrayList<Duty> duties = dutiesMap.get(userTask.getDutyId());
                             if (duties.size() > 0) {
-                                Duty duty = duties.get(0);
-                                String dutyName = duty.getTitle();
-                                String dutyIcon = duty.getIcon();
-                                Resources resources = context.getResources();
-                                final int resourceId = resources.getIdentifier(dutyIcon, "drawable", context.getPackageName());
-                                boolean finished = userTask.isFinished();
+                                for (Duty duty: duties) {
+                                    String dutyName = duty.getTitle();
+                                    String dutyIcon = duty.getIcon();
+                                    Resources resources = context.getResources();
+                                    final int resourceId = resources.getIdentifier(dutyIcon, "drawable", context.getPackageName());
+                                    boolean finished = userTask.isFinished();
 
-                                User currentCleaningUser = Users.getInstance().getUserById(userTask.getUserId());
+                                    String username = Members.getNameById(membersMap, userTask.getUserId());
 
-                                if (currentCleaningUser != null) {
-                                    cleaningGroup.addView(createCleaningItem(inflater, resourceId, currentCleaningUser.getName(), finished));
+                                    if (username != null) {
+                                        cleaningGroup.addView(createCleaningItem(inflater, resourceId, username, finished));
+                                    }
                                 }
                             }
                         }

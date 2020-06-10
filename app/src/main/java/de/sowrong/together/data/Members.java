@@ -10,6 +10,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Members {
     String MEMBERS_TAG = "data/Members";
@@ -137,5 +138,14 @@ public class Members {
         for (MemberDataListener listener: this.listeners) {
             listener.onMemberDataChanged(memberDataList);
         }
+    }
+
+    public static String getNameById(HashMap<String, Member> membersMap, String userId) {
+        for (Member member: membersMap.values()) {
+            if (member.getId().equals(userId)) {
+                return member.getName();
+            }
+        }
+        return null;
     }
 }

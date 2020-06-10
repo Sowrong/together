@@ -14,18 +14,28 @@ import de.sowrong.together.data.CleaningDataListener;
 import de.sowrong.together.data.CleaningWeek;
 import de.sowrong.together.data.Duty;
 import de.sowrong.together.data.Group;
+import de.sowrong.together.data.Member;
+import de.sowrong.together.data.Members;
+import de.sowrong.together.data.User;
+import de.sowrong.together.data.Users;
 
 public class CleaningViewModel extends ViewModel {
 
+    private MutableLiveData<HashMap<String, Member>> members;
     private MutableLiveData<HashMap<String, CleaningWeek>> cleaning;
     private MutableLiveData<HashMap<String, ArrayList<Duty>>> duties;
 
     public CleaningViewModel() {
+        members = new MutableLiveData<>();
+        members.setValue(Members.getInstance().getMembersMap());
+
         cleaning = new MutableLiveData<>();
         cleaning.setValue(Cleaning.getInstance().getCleaningMap());
 
         duties = new MutableLiveData<>();
         duties.setValue(Cleaning.getInstance().getDutiesMap());
+
+        Members.getInstance().addMemberDataChangedListeners(membersMap -> members.setValue(membersMap));
 
         Group.getInstance().addCleaningDataChangedListeners(new CleaningDataListener() {
             @Override
@@ -39,6 +49,9 @@ public class CleaningViewModel extends ViewModel {
         });
     }
 
+    public LiveData<HashMap<String, Member>> getMembers() {
+        return members;
+    }
     public LiveData<HashMap<String, CleaningWeek>> getCleaning() {
         return cleaning;
     }
