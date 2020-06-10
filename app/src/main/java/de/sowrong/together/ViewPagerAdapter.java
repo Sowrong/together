@@ -5,7 +5,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-import de.sowrong.together.ui.CardFragment;
 import de.sowrong.together.ui.calendar.CalendarFragment;
 import de.sowrong.together.ui.cleaning.CleaningFragment;
 import de.sowrong.together.ui.shoppingList.ShoppingListFragment;
@@ -24,10 +23,8 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
                 return new CalendarFragment();
             case 2:
                 return new WalletFragment();
-            case 3:
-                return new ShoppingListFragment();
             default:
-                return CardFragment.newInstance(position);
+                return new ShoppingListFragment();
         }
     }
     @Override public int getItemCount() {

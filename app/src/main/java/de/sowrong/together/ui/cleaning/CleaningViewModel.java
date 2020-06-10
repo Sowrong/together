@@ -33,11 +33,13 @@ public class CleaningViewModel extends ViewModel {
                 cleaning.setValue(cleaningMap);
             }
             @Override
-            public void onDutyDataChanged(HashMap<String, ArrayList<Duty>> duties) { }
+            public void onDutyDataChanged(HashMap<String, ArrayList<Duty>> dutiesMap) {
+                duties.setValue(dutiesMap);
+            }
         });
     }
 
-    public LiveData<HashMap<String, CleaningWeek>> getClening() {
+    public LiveData<HashMap<String, CleaningWeek>> getCleaning() {
         return cleaning;
     }
     public LiveData<HashMap<String, ArrayList<Duty>>> getDuties() {

@@ -9,11 +9,15 @@ import java.util.ArrayList;
 
 public class CleaningWeek implements Comparable<CleaningWeek> {
     private LocalDate date;
-    private DateTimeFormatter dateFormater;
     private ArrayList<CleaningWeekUserTask> userTasks;
 
     public CleaningWeek(String week) {
-        dateFormater = new DateTimeFormatterBuilder()
+        date = parseStringAsCalendarWeek(week);
+        userTasks = new ArrayList<>();
+    }
+
+    public static LocalDate parseStringAsCalendarWeek(String input) {
+        DateTimeFormatter dateFormater = new DateTimeFormatterBuilder()
                 .appendValue(IsoFields.WEEK_BASED_YEAR, 4)
                 .appendLiteral('-')
                 .appendLiteral('W')
@@ -24,9 +28,7 @@ public class CleaningWeek implements Comparable<CleaningWeek> {
 
         //dateFormater = DateTimeFormatter.ofPattern("yyyy-'W'-ww E");
         // always start at first day of week, this is not encoded in database
-        date = LocalDate.parse(week+" 1", dateFormater);
-
-        userTasks = new ArrayList<>();
+        return LocalDate.parse(input+" 1", dateFormater);
     }
 
     public void addUserTask(String entryId, String userId, String dutyId, boolean finished) {

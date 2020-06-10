@@ -19,7 +19,7 @@ public class Users {
     private static String ownId;
     private static ArrayList<UserDataListener> listeners;
 
-    private final String DB_CONNECTOR_TAG = "Firebase";
+    private final String DB_CONNECTOR_TAG = "data/Users";
 
     public Users() {
         ownId = "";

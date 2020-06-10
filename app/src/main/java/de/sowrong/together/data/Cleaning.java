@@ -63,7 +63,7 @@ public class Cleaning {
 
                                                     for (DataSnapshot dutyDetailsSnapshot : dutySnapshot.getChildren()) {
                                                         switch (dutyDetailsSnapshot.getKey()) {
-                                                            case "title":
+                                                            case "name":
                                                                 title = (String) dutyDetailsSnapshot.getValue();
                                                                 break;
                                                             case "icon":
