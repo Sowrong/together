@@ -30,12 +30,15 @@ public class Group {
     public Group() {
         memberDataListeners = new ArrayList<>();
         cleaningDataListeners = new ArrayList<>();
-        calendarDataListeners  = new ArrayList<>();
+        calendarDataListeners = new ArrayList<>();
         shoppingListDataListeners = new ArrayList<>();
         transactionDataListeners = new ArrayList<>();
         groupId = "";
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user == null)
+            return;
 
         ownUserId = user.getUid();
 

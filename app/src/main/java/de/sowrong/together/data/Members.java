@@ -40,6 +40,8 @@ public class Members {
                     if (member == null) {
                         member = new Member(userId, user.getName(), user.getGroupId(), role);
                         membersMap.put(userId, member);
+
+                        updateBalances(Transactions.getInstance().getTransactionMap());
                     }
 
                     // TODO Check here if groupID has changed
@@ -62,8 +64,6 @@ public class Members {
         DatabaseReference ref = database.getReference("users/" + userId);
         ref.addListenerForSingleValueEvent(getMemberEventListener(userId, role));
         ref.addValueEventListener(getMemberEventListener(userId, role));
-
-        updateBalances(Transactions.getInstance().getTransactionMap());
     }
 
     void populate(Group group) {
