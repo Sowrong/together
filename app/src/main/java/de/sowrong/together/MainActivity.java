@@ -1,5 +1,7 @@
 package de.sowrong.together;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -25,12 +27,15 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -43,38 +48,86 @@ import androidx.viewpager2.widget.ViewPager2;
 import java.util.Arrays;
 import java.util.List;
 
+import de.sowrong.together.data.Users;
+import de.sowrong.together.ui.calendar.NewEditCalenderEntryActivity;
 import de.sowrong.together.ui.cleaning.CleaningFragment;
+import de.sowrong.together.ui.shoppingList.NewEditShoppingListEntryActivity;
+import de.sowrong.together.ui.wallet.NewEditTransactionActivity;
 
 
 public class MainActivity extends AppCompatActivity {
-
-    final int TAB_CLEANING = 0;
-    final int TAB_CALENDAR = 1;
-    final int TAB_WALLET = 2;
-    final int TAB_SHOPPING_LIST = 3;
+    public static final int TAB_CLEANING = 0;
+    public static final int TAB_CALENDAR = 1;
+    public static final int TAB_WALLET = 2;
+    public static final int TAB_SHOPPING_LIST = 3;
 
     private static final int RC_SIGN_IN = 123;
 
     private FirebaseAuth mAuth;
+    private Context context;
 
-    private AppBarConfiguration mAppBarConfiguration;
     TabLayout tabLayout;
+    NavigationView navigationView;
     ViewPager2 viewPager;
     FloatingActionButton floatingActionButton;
     int previousTabPosition;
 
-
+    public static final String CALENDAR_ENTRY_ID = "de.sowrong.together.CALENDAR_ENTRY_ID";
+    public static final String TRANSACTION_ENTRY_ID = "de.sowrong.together.TRANSACTION_ENTRY_ID";
+    public static final String SHOPPING_LIST_ENTRY_ID = "de.sowrong.together.SHOPPING_LIST_ENTRY_ID";
+    public static final String SHOPPING_LIST_ITEM_ID = "de.sowrong.together.SHOPPING_LIST_ITEM_ID";
+    public static final String GOTO_TAB = "de.sowrong.together.GOTO_TAB";
+    public static final int TAB_REQUEST_CODE = 42;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        context = this;
 
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Menu mainMenu = findViewById(R.id.main_menu);
+        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close);
 
+        drawerLayout.setDrawerListener(toggle);
+        toggle.syncState();
+
+        navigationView = findViewById(R.id.nav_view);
+
+        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                item.setChecked(true);
+
+                switch (item.getItemId()) {
+                    case R.id.nav_cleaning:
+                        tabLayout.selectTab(tabLayout.getTabAt(0));
+                        break;
+                    case R.id.nav_calendar:
+                        tabLayout.selectTab(tabLayout.getTabAt(1));
+                        break;
+                    case R.id.nav_wallet:
+                        tabLayout.selectTab(tabLayout.getTabAt(2));
+                        break;
+                    case R.id.nav_shopping_list:
+                        tabLayout.selectTab(tabLayout.getTabAt(3));
+                        break;
+                }
+
+                DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+                drawer.closeDrawer(GravityCompat.START);
+
+
+                item.setChecked(false);
+
+                return false;
+            }
+        });
 
         previousTabPosition = TAB_CLEANING;
 
@@ -83,8 +136,33 @@ public class MainActivity extends AppCompatActivity {
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (tabLayout.getSelectedTabPosition() == 0) {
-                    CleaningFragment.fabClickListener();
+                Intent intent;
+
+                switch (tabLayout.getSelectedTabPosition()) {
+                    case 0:
+                        CleaningFragment cleaningFragment = CleaningFragment.getInstance();
+                        if (cleaningFragment != null) {
+                            cleaningFragment.fabClickListener();
+                        }
+                        break;
+                    case 1:
+                        intent = new Intent(context, NewEditCalenderEntryActivity.class);
+                        String calendarEntryId = "";
+                        intent.putExtra(CALENDAR_ENTRY_ID, calendarEntryId);
+                        startActivity(intent);
+                        break;
+                    case 2:
+                        intent = new Intent(context, NewEditTransactionActivity.class);
+                        String transactionId = "";
+                        intent.putExtra(TRANSACTION_ENTRY_ID, transactionId);
+                        startActivity(intent);
+                        break;
+                    case 3:
+                        intent = new Intent(context, NewEditShoppingListEntryActivity.class);
+                        String shoppingListEntryId = "";
+                        intent.putExtra(SHOPPING_LIST_ENTRY_ID, shoppingListEntryId);
+                        startActivity(intent);
+                        break;
                 }
                 /*
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
@@ -94,17 +172,13 @@ public class MainActivity extends AppCompatActivity {
         });
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        NavigationView navigationView = findViewById(R.id.nav_view);
+
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
-        mAppBarConfiguration = new AppBarConfiguration.Builder(
+        new AppBarConfiguration.Builder(
                 R.id.nav_cleaning, R.id.nav_calendar, R.id.nav_wallet, R.id.nav_shopping_list)
                 .setDrawerLayout(drawer)
                 .build();
-
-        //NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        //NavigationView navView = findViewById(R.id.nav_view);
-        //NavigationUI.setupWithNavController(navView, navController);
 
         viewPager = findViewById(R.id.viewPager);
         tabLayout = findViewById(R.id.tabs);
@@ -146,8 +220,6 @@ public class MainActivity extends AppCompatActivity {
                 if (previousTabPosition == TAB_CLEANING || newTabPosition == TAB_CLEANING) {
                     animateFloatingActionButton(newTabPosition);
                 }
-
-                //tab.getIcon().setColorFilter(Color.parseColor("#ffffff"), PorterDuff.Mode.SRC_IN);
                 tab.getIcon().setAlpha(255);
                 viewPager.setCurrentItem(newTabPosition);
                 previousTabPosition = newTabPosition;
@@ -156,6 +228,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
                 tab.getIcon().setAlpha(128);
+
+                int size = navigationView.getMenu().size();
+                for (int i = 0; i < size; i++) {
+                    navigationView.getMenu().getItem(i).setChecked(false);
+                }
             }
 
             @Override
@@ -175,6 +252,8 @@ public class MainActivity extends AppCompatActivity {
 
 
             FirebaseFirestore db = FirebaseFirestore.getInstance();
+            FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+
             db.collection("users")
                     .get()
                     .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
@@ -182,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
                         public void onComplete(@NonNull Task<QuerySnapshot> task) {
                             if (task.isSuccessful()) {
                                 for (QueryDocumentSnapshot document : task.getResult()) {
-                                    if (document.getId().equals(user.getUid()))  {
+                                    if (document.getId().equals(user.getUid())) {
                                         Log.d("Firebase", "User: " + document.getData().get("nickname") + " is in group " + document.getData().get("group"));
                                     }
                                     Log.d("Firebase", document.getId() + " => " + document.getData());
@@ -198,6 +277,8 @@ public class MainActivity extends AppCompatActivity {
             // No user is signed in
             createSignInIntent();
         }
+
+        Users.getInstance();
     }
 
 
@@ -310,6 +391,21 @@ public class MainActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == Activity.RESULT_OK) {
+            // Get String data from Intent
+            String tabIndex = data.getStringExtra(MainActivity.GOTO_TAB);
+
+            if (!tabIndex.isEmpty()) {
+                tabLayout.selectTab(tabLayout.getTabAt(Integer.valueOf(tabIndex)));
+            }
+        }
+    }
+
 /*
     @Override
     public boolean onSupportNavigateUp() {
@@ -318,4 +414,5 @@ public class MainActivity extends AppCompatActivity {
                 || super.onSupportNavigateUp();
     }
  */
+
 }

@@ -26,7 +26,7 @@ public class Users {
         usersMap = new HashMap<>();
         listeners = new ArrayList<>();
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
         FirebaseDatabase db = FirebaseDatabase.getInstance();
 
@@ -38,34 +38,20 @@ public class Users {
                 if (dataSnapshot != null) {
                     usersMap.clear();
 
-                    for(DataSnapshot childSnapshot: dataSnapshot.getChildren()) {
+                    for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
                         String id = childSnapshot.getKey();
-                        String groupId = "";
-                        String name = "";
+                        User user = childSnapshot.getValue(User.class);
 
-                        for (DataSnapshot userDetailSnapshot: childSnapshot.getChildren()) {
-                            switch (userDetailSnapshot.getKey()) {
-                                case "groupId":
-                                    groupId = (String)userDetailSnapshot.getValue();
-                                    break;
-                                case "name":
-                                    name = (String)userDetailSnapshot.getValue();
-                                    break;
-                            }
-                        }
+                        usersMap.put(id, user);
 
-                        User nextUser = new User(id, groupId, name);
-                        usersMap.put(id, nextUser);
-
-                        if (user.getUid().equals(id)) {
+                        if (firebaseUser.getUid().equals(id)) {
                             ownId = id;
                         }
                     }
+                    notifyUserDataChangedListeners(usersMap);
+                    Log.d(DB_CONNECTOR_TAG, "users updated");
                 }
 
-                notifyUserDataChangedListeners(usersMap);
-
-                Log.d(DB_CONNECTOR_TAG, "users updated");
             }
 
             @Override
@@ -74,10 +60,8 @@ public class Users {
             }
         };
 
-        usersReference.addValueEventListener(valueEventListener);
-
-        // grab initial data
         usersReference.addListenerForSingleValueEvent(valueEventListener);
+        usersReference.addValueEventListener(valueEventListener);
     }
 
     public static String getOwnId() {
@@ -87,8 +71,8 @@ public class Users {
             return ownId;
     }
 
-    public static User getUserById(String id) {
-        return usersMap.get(id);
+    public User getUserById(String id) {
+        return getUsers().get(id);
     }
 
     public static HashMap<String, User> getUsers() {

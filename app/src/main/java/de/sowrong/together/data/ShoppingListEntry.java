@@ -5,17 +5,16 @@ import java.time.format.DateTimeFormatter;
 
 public class ShoppingListEntry {
     private String entryId;
-    private String userId;
     private String item;
-    private LocalDateTime datetime;
-    private DateTimeFormatter dateTimeFormatter;
 
-    public ShoppingListEntry(String entryId, String userId, String item, String datetime) {
+    public ShoppingListEntry() {
+        this.entryId = Group.randomId();
+        this.item = "";
+    }
+
+    public ShoppingListEntry(String entryId, String item) {
         this.entryId = entryId;
-        this.userId = userId;
         this.item = item;
-        this.dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-        this.datetime = LocalDateTime.parse(datetime, dateTimeFormatter);
     }
 
     public String getEntryId() {
@@ -26,14 +25,6 @@ public class ShoppingListEntry {
         this.entryId = entryId;
     }
 
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
     public String getItem() {
         return item;
     }
@@ -42,11 +33,12 @@ public class ShoppingListEntry {
         this.item = item;
     }
 
-    public LocalDateTime getDatetime() {
-        return datetime;
+    public void save() {
+        ShoppingList.getInstance().syncShoppingList();
     }
 
-    public void setDatetime(LocalDateTime datetime) {
-        this.datetime = datetime;
+    public void delete() {
+        ShoppingList.getInstance().deleteShoppingListEntry(this.getEntryId());
+        save();
     }
 }

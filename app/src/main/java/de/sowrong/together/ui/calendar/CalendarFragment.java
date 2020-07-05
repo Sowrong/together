@@ -1,5 +1,7 @@
 package de.sowrong.together.ui.calendar;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,10 +22,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import de.sowrong.together.MainActivity;
 import de.sowrong.together.R;
 import de.sowrong.together.data.CalendarEntry;
 import de.sowrong.together.data.Group;
@@ -32,7 +36,6 @@ import de.sowrong.together.ui.wallet.WalletViewModel;
 
 public class CalendarFragment extends Fragment {
     private CalendarViewModel model;
-    private ViewGroup calendarGroup;
     private HashMap<String, CalendarEntry> calendarMap;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -42,6 +45,7 @@ public class CalendarFragment extends Fragment {
         model = ViewModelProviders.of(this).get(CalendarViewModel.class);
 
         CalendarView calendarView = root.findViewById(R.id.calendarView);
+        calendarView.setFirstDayOfWeek(Calendar.MONDAY);
 
         calendarView.setOnDateChangeListener((view, year, month, day) -> {
             // months are indexed 0-11
@@ -64,7 +68,7 @@ public class CalendarFragment extends Fragment {
         if (calendarMap.isEmpty())
             return;
 
-        calendarGroup = root.findViewById(R.id.calendarItems);
+        ViewGroup calendarGroup = root.findViewById(R.id.calendarItems);
         calendarGroup.removeAllViews();
 
         Instant instant = Instant.ofEpochMilli(millis);
@@ -85,6 +89,23 @@ public class CalendarFragment extends Fragment {
 
         timeView.setText(calendarEntry.getTime());
         labelView.setText(calendarEntry.getTitle());
+
+        Context context = getActivity();
+
+        calendarItem.setOnClickListener(view -> {
+            Intent intent = new Intent(context, DetailsCalenderEntryActivity.class);
+            String calendarEntryId = calendarEntry.getEntryId();
+            intent.putExtra(MainActivity.CALENDAR_ENTRY_ID, calendarEntryId);
+            startActivity(intent);
+        });
+
+        calendarItem.setOnLongClickListener(view -> {
+            Intent intent = new Intent(context, NewEditCalenderEntryActivity.class);
+            String calendarEntryId = calendarEntry.getEntryId();
+            intent.putExtra(MainActivity.CALENDAR_ENTRY_ID, calendarEntryId);
+            startActivity(intent);
+            return false;
+        });
 
         return calendarItem;
     }

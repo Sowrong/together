@@ -6,4 +6,7 @@
     <dimen name="nav_header_height">176dp</dimen>
     <dimen name="fab_margin">20dp</dimen>
     <dimen name="cleaning_height">75dp</dimen>
+    <dimen name="card_line_height">30dp</dimen>
+    <dimen name="card_calendar_entry_details_line_height">90dp</dimen>
+    <dimen name="transaction_item_height">60dp</dimen>
 </resources>

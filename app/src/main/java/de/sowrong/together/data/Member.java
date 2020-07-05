@@ -12,14 +12,16 @@ public class Member {
     private static final String MEMBER_TAG = "data/Member";
     private String id;
     private String name;
+    private String role;
     private String groupId;
     private double balance;
 
-    public Member(String id, String name, String groupId, double balance) {
+    public Member(String id, String name, String groupId, String role) {
         this.id = id;
         this.name = name;
         this.groupId = groupId;
-        this.balance = balance;
+        this.balance = 0.0d;
+        this.role = role;
     }
 
     public String getId() {
@@ -52,5 +54,13 @@ public class Member {
 
     public void setBalance(double balance) {
         this.balance = balance;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

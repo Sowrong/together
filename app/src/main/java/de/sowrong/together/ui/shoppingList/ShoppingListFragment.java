@@ -1,5 +1,8 @@
 package de.sowrong.together.ui.shoppingList;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,79 +23,83 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
+import de.sowrong.together.MainActivity;
 import de.sowrong.together.R;
+import de.sowrong.together.data.CalendarEntry;
 import de.sowrong.together.data.Group;
 import de.sowrong.together.data.Member;
 import de.sowrong.together.data.ShoppingList;
 import de.sowrong.together.data.ShoppingListEntry;
+import de.sowrong.together.ui.calendar.NewEditCalenderEntryActivity;
+import de.sowrong.together.ui.wallet.NewEditTransactionActivity;
 import de.sowrong.together.ui.wallet.WalletViewModel;
 
 public class ShoppingListFragment extends Fragment {
     private ShoppingListViewModel model;
-    private RecyclerView recyclerView;
-    private RecyclerViewAdapter mAdapter;
-    private LinearLayout coordinatorLayout;
+    private HashMap<String, ShoppingListEntry> shoppingListMap;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_tasks_shopping_list, container, false);
 
         model = ViewModelProviders.of(requireActivity()).get(ShoppingListViewModel.class);
-        recyclerView = root.findViewById(R.id.recyclerView);
-        coordinatorLayout = root.findViewById(R.id.coordinatorLayout);
 
-        populateRecyclerView();
-        enableSwipeToDeleteAndUndo();
+        model.getShoppingList().observe(this, shoppingListMap -> {
+            this.shoppingListMap = shoppingListMap;
+            redrawShoppingItem(root, inflater);
+        });
 
         return root;
     }
 
-    private void enableSwipeToDeleteAndUndo() {
-        SwipeToDeleteCallback swipeToDeleteCallback = new SwipeToDeleteCallback(getActivity()) {
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
-                final int position = viewHolder.getAdapterPosition();
-                final String item = mAdapter.getData().get(position);
+    private void redrawShoppingItem(View root, @NonNull LayoutInflater inflater) {
+        if (shoppingListMap.isEmpty())
+            return;
 
-                mAdapter.removeItem(position);
+        ViewGroup shoppingListGroup = root.findViewById(R.id.shoppingList);
+        shoppingListGroup.removeAllViews();
 
-                Snackbar snackbar = Snackbar
-                        .make(coordinatorLayout, "Item was removed from the list.", Snackbar.LENGTH_LONG);
-                snackbar.setAction("UNDO", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-
-                        mAdapter.restoreItem(item, position);
-                        recyclerView.scrollToPosition(position);
-                    }
-                });
-
-                snackbar.setActionTextColor(Color.YELLOW);
-                snackbar.show();
-            }
-        };
-
-        ItemTouchHelper itemTouchhelper = new ItemTouchHelper(swipeToDeleteCallback);
-        itemTouchhelper.attachToRecyclerView(recyclerView);
+        shoppingListMap.entrySet().stream()
+                .forEach(entry -> shoppingListGroup.addView(createShoppingItem(inflater, entry.getValue())));
     }
 
-    private void populateRecyclerView() {
-        model.getShoppingList().observe(this, shoppingListMap -> {
-            if (shoppingListMap.isEmpty())
-                return;
+    private View createShoppingItem(LayoutInflater inflater, ShoppingListEntry shoppingListEntry) {
+        View shoppingListItem = inflater.inflate(R.layout.shopping_list_item, null);
+        TextView itemView = shoppingListItem.findViewById(R.id.item);
 
-            ArrayList<String> arrayList = new ArrayList<>();
+        itemView.setText(shoppingListEntry.getItem());
 
-            for (Map.Entry<String, ShoppingListEntry> entry : shoppingListMap.entrySet()) {
-                ShoppingListEntry shoppingListEntry = entry.getValue();
-                arrayList.add(shoppingListEntry.getItem());
-            }
+        Context context = getActivity();
 
-            mAdapter = new RecyclerViewAdapter(arrayList);
-            recyclerView.setAdapter(mAdapter);
+        shoppingListItem.setOnClickListener(view -> {
+            Intent intent = new Intent(context, NewEditTransactionActivity.class);
+            intent.putExtra(MainActivity.TRANSACTION_ENTRY_ID, "");
+            intent.putExtra(MainActivity.SHOPPING_LIST_ITEM_ID, shoppingListEntry.getEntryId());
+            startActivityForResult(intent, MainActivity.TAB_REQUEST_CODE);
         });
+
+        shoppingListItem.setOnLongClickListener(view -> {
+            Intent intent = new Intent(context, NewEditShoppingListEntryActivity.class);
+            String shoppingListEntryId = shoppingListEntry.getEntryId();
+            intent.putExtra(MainActivity.SHOPPING_LIST_ENTRY_ID, shoppingListEntryId);
+            startActivity(intent);
+            return false;
+        });
+
+        return shoppingListItem;
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }

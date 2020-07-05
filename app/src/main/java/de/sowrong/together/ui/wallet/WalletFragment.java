@@ -1,5 +1,7 @@
 package de.sowrong.together.ui.wallet;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,12 +20,12 @@ import java.util.Map;
 import de.sowrong.together.R;
 import de.sowrong.together.data.Group;
 import de.sowrong.together.data.Member;
+import de.sowrong.together.ui.calendar.DetailsCalenderEntryActivity;
 
-public class WalletFragment extends Fragment implements OnRefreshListener {
+public class WalletFragment extends Fragment {
     private ViewGroup walletGroup;
     private WalletViewModel model;
     private TextView textViewOwnBalance;
-    private SwipeRefreshLayout swipeRefreshLayout;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -56,8 +58,19 @@ public class WalletFragment extends Fragment implements OnRefreshListener {
             }
         });
 
-        swipeRefreshLayout = root.findViewById(R.id.swiperefresh);
-        swipeRefreshLayout.setOnRefreshListener(this);
+
+        root.findViewById(R.id.walletDetailsCard).setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), ListTransactionsActivity.class);
+            startActivity(intent);
+        });
+        root.findViewById(R.id.walletDetailItems).setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), ListTransactionsActivity.class);
+            startActivity(intent);
+        });
+        root.findViewById(R.id.walletDetailsTextView).setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), ListTransactionsActivity.class);
+            startActivity(intent);
+        });
 
         return root;
     }
@@ -85,21 +98,6 @@ public class WalletFragment extends Fragment implements OnRefreshListener {
         }
         else {
             balanceView.setTextColor(getResources().getColor(R.color.colorAccent));
-        }
-    }
-
-    @Override
-    public void onRefresh() {
-        Log.d("WalletFragment", "Started refresh");
-
-        /*
-        model.getBalance().observe(this, balance -> {
-            setTextViewToBalance(textViewOwnBalance, balance);
-        });
-         */
-
-        if (swipeRefreshLayout.isRefreshing()) {
-            swipeRefreshLayout.setRefreshing(false);
         }
     }
 }

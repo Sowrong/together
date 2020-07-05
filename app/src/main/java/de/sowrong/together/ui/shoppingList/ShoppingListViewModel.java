@@ -17,7 +17,7 @@ public class ShoppingListViewModel extends ViewModel {
     public ShoppingListViewModel() {
         shoppingList = new MutableLiveData<>();
         shoppingList.setValue(ShoppingList.getInstance().getShoppingListMap());
-        Group.getInstance().addShoppingListDataChangedListeners(shoppingList::setValue);
+        Group.getInstance().addShoppingListDataChangedListeners(value -> shoppingList.setValue(value));
     }
 
     public LiveData<HashMap<String, ShoppingListEntry>> getShoppingList() {

@@ -4,11 +4,6 @@ public class Duty {
     private String title;
     private String icon;
 
-    public Duty(String title, String icon) {
-        this.title = title;
-        this.icon = icon;
-    }
-
     public String getTitle() {
         return title;
     }

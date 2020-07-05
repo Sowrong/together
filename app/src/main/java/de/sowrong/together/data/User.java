@@ -6,16 +6,8 @@ public class User {
     private String id;
     private String groupId;
     private String name;
-    private double balance;
 
     //private Image avatar;
-
-
-    public User(String id, String groupId, String name) {
-        this.id = id;
-        this.groupId = groupId;
-        this.name = name;
-    }
 
     public String getId() {
         return id;

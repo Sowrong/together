@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
@@ -23,37 +24,31 @@ public class Members {
         listeners = new ArrayList<>();
     }
 
-    ValueEventListener getMemberEventListener(String userId, Double userBalance) {
+    public int getNumberMembers() {
+        return membersMap.size();
+    }
+
+    ValueEventListener getMemberEventListener(String userId, String role) {
         return new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot != null) {
-                    for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                        String name = "";
-                        String groupId = "";
+                    User user = dataSnapshot.getValue(User.class);
 
-                        if (userId.equals(childSnapshot.getKey())) {
-                            for (DataSnapshot userDetailSnapshot : childSnapshot.getChildren()) {
-                                switch (userDetailSnapshot.getKey()) {
-                                    case "name":
-                                        name = (String) userDetailSnapshot.getValue();
-                                        break;
-                                    case "groupId":
-                                        groupId = (String) userDetailSnapshot.getValue();
-                                        break;
-                                }
-                            }
+                    Member member = membersMap.get(user.getId());
 
-                            Log.d(MEMBERS_TAG, "userId: " + userId + ", name: " + name + ", groupId: " + groupId);
-                        }
-
-                        Member member = new Member(userId, name, groupId, userBalance);
+                    if (member == null) {
+                        member = new Member(userId, user.getName(), user.getGroupId(), role);
                         membersMap.put(userId, member);
-
-                        notifyMemberDataChangedListeners(membersMap);
                     }
+
+                    // TODO Check here if groupID has changed
+                    member.setName(user.getName());
+
+                    notifyMemberDataChangedListeners(membersMap);
                 }
             }
+
             @Override
             public void onCancelled(DatabaseError error) {
                 Log.e(MEMBERS_TAG, "failed to read user and group id", error.toException());
@@ -61,56 +56,86 @@ public class Members {
         };
     }
 
-    ValueEventListener getBalanceEventListener(String groupId) {
-        return new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot != null) {
-                    for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                        if ((childSnapshot.getKey().equals(groupId))) {
-                            for (DataSnapshot groupSnapshot : childSnapshot.getChildren()) {
-                                if (groupSnapshot.getKey().equals("balances")) {
-                                    for (DataSnapshot memberSnapshot : groupSnapshot.getChildren()) {
-                                        String id = memberSnapshot.getKey();
-                                        Double balance = null;
-                                        for (DataSnapshot memberDataSnapshot : memberSnapshot.getChildren()) {
-                                            if (memberDataSnapshot.getKey().equals("balance")) {
-                                                balance = Double.parseDouble((String) memberDataSnapshot.getValue());
-                                            }
-                                        }
+    void addMember(String userId, String role) {
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
 
-                                        if (balance != null)
-                                            addMember(id, balance);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e(MEMBERS_TAG, "failed to read user and group id", error.toException());
-            }
-        };
-    }
+        DatabaseReference ref = database.getReference("users/" + userId);
+        ref.addListenerForSingleValueEvent(getMemberEventListener(userId, role));
+        ref.addValueEventListener(getMemberEventListener(userId, role));
 
-    void addMember(String userId, Double userBalance) {
-        Query databaseQuery = FirebaseDatabase.getInstance().getReference().child("users").orderByKey().equalTo(userId);
-        ValueEventListener memberEventListener = getMemberEventListener(userId, userBalance);
-
-        databaseQuery.addListenerForSingleValueEvent(memberEventListener);
-        databaseQuery.addValueEventListener(memberEventListener);
+        updateBalances(Transactions.getInstance().getTransactionMap());
     }
 
     void populate(Group group) {
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+
         String groupId = group.getGroupId();
 
-        Query databaseQuery = FirebaseDatabase.getInstance().getReference().child("groups").orderByKey().equalTo(groupId);
-        ValueEventListener valueEventListener = getBalanceEventListener(groupId);
+        DatabaseReference ref = database.getReference("groups/" + groupId + "/member");
+        ref.addListenerForSingleValueEvent(
+                new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            for (DataSnapshot roleSnapshot : dataSnapshot.getChildren()) {
+                                String userId = roleSnapshot.getKey();
+                                Role role = roleSnapshot.getValue(Role.class);
 
-        databaseQuery.addListenerForSingleValueEvent(valueEventListener);
-        databaseQuery.addValueEventListener(valueEventListener);
+                                addMember(userId, role.getRole());
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                        Log.e(MEMBERS_TAG, "failed to read user and group id", error.toException());
+                    }
+                }
+        );
+
+        ref.addValueEventListener(
+                new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            for (DataSnapshot roleSnapshot : dataSnapshot.getChildren()) {
+                                String userId = roleSnapshot.getKey();
+                                Role role = roleSnapshot.getValue(Role.class);
+
+                                if (membersMap.containsKey(userId)) {
+                                    //todo enable!
+                                    //membersMap.get(userId).setRole(role.getRole());
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                        Log.e(MEMBERS_TAG, "failed to read user and group id", error.toException());
+                    }
+                }
+        );
+
+        Transactions.getInstance().addTransactionDataChangedListeners(transactionMap -> updateBalances(transactionMap));
+    }
+
+    void updateBalances(HashMap<String, Transaction> transactionMap) {
+        membersMap.entrySet().forEach(entry -> {
+            Member currentMember = entry.getValue();
+            String currentMemberUserId = currentMember.getId();
+            int numberMembers = Members.getInstance().getNumberMembers();
+
+            double currentMemberTransactionValues = transactionMap.values().stream().
+                    filter(transaction -> currentMemberUserId.equals(transaction.getUserId())).
+                    mapToDouble(Transaction::getValue).sum();
+
+            double currentMemberTotalTransactionValues = transactionMap.values().stream().mapToDouble(Transaction::getValue).sum();
+
+            currentMember.setBalance(currentMemberTransactionValues - (currentMemberTotalTransactionValues / numberMembers));
+        });
+
+        notifyMemberDataChangedListeners(membersMap);
     }
 
     public static Members getInstance() {
@@ -140,8 +165,8 @@ public class Members {
         }
     }
 
-    public static String getNameById(HashMap<String, Member> membersMap, String userId) {
-        for (Member member: membersMap.values()) {
+    public String getNameById(String userId) {
+        for (Member member : membersMap.values()) {
             if (member.getId().equals(userId)) {
                 return member.getName();
             }

@@ -11,9 +11,11 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 public class Group {
     private static final String GROUP_TAG = "data/Group";
+    private static final int ID_LENGTH = 128;
 
     private static String ownUserId;
     private static String groupId;
@@ -49,13 +51,13 @@ public class Group {
                                     groupId = (String) userDetailSnapshot.getValue();
                                     Log.d(GROUP_TAG, "user " + ownUserId + " found, adding members to group: " + groupId);
 
-                                    Members members = Members.getInstance();
-                                    members.populate(instance);
-                                    members.addMemberDataChangedListeners(membersMap -> notifyMemberDataChangedListeners(membersMap));
-
                                     Transactions transactions = Transactions.getInstance();
                                     transactions.populate(instance);
                                     transactions.addTransactionDataChangedListeners(transactionsMap -> notifyTransactionDataChangedListeners(transactionsMap));
+
+                                    Members members = Members.getInstance();
+                                    members.populate(instance);
+                                    members.addMemberDataChangedListeners(membersMap -> notifyMemberDataChangedListeners(membersMap));
 
                                     Cleaning cleaning = Cleaning.getInstance();
                                     cleaning.populate(instance);
@@ -166,12 +168,26 @@ public class Group {
     public void addShoppingListDataChangedListeners(ShoppingListDataListener listener) {
         shoppingListDataListeners.add(listener);
     }
+
     public void removeShoppingListDataChangedListeners(ShoppingListDataListener listener) {
         shoppingListDataListeners.remove(listener);
     }
+
     protected void notifyShoppingListDataChangedListeners(HashMap<String, ShoppingListEntry> shoppingListMap) {
-        for (ShoppingListDataListener listener: this.shoppingListDataListeners) {
+        for (ShoppingListDataListener listener : this.shoppingListDataListeners) {
             listener.onShoppingListDataChanged(shoppingListMap);
         }
+    }
+
+    public static String randomId() {
+        int leftLimit = 48; // numeral '0'
+        int rightLimit = 122; // letter 'z'
+        Random random = new Random();
+
+        return random.ints(leftLimit, rightLimit + 1)
+                .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
+                .limit(ID_LENGTH)
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
     }
 }

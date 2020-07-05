@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
@@ -34,38 +35,11 @@ public class ShoppingList {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot != null) {
-                    for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                        if ((childSnapshot.getKey().equals(groupId))) {
-                            for (DataSnapshot groupSnapshot : childSnapshot.getChildren()) {
-                                if (groupSnapshot.getKey().equals("shoppingList")) {
-                                    for (DataSnapshot shoppingListEntrySnapshot : groupSnapshot.getChildren()) {
-                                        String shoppingListEntryId = shoppingListEntrySnapshot.getKey();
-                                        String userId = "";
-                                        String datetime = "";
-                                        String item = "";
-
-                                        for (DataSnapshot shoppingListEntryDetailSnapshot : shoppingListEntrySnapshot.getChildren()) {
-                                            switch (shoppingListEntryDetailSnapshot.getKey()) {
-                                                case "userId":
-                                                    userId = (String) shoppingListEntryDetailSnapshot.getValue();
-                                                    break;
-                                                case "item":
-                                                    item = (String) shoppingListEntryDetailSnapshot.getValue();
-                                                    break;
-                                                case "datetime":
-                                                    datetime = (String) shoppingListEntryDetailSnapshot.getValue();
-                                                    break;
-                                            }
-                                        }
-
-                                        if (!userId.isEmpty() && !item.isEmpty() && !datetime.isEmpty()) {
-                                            shoppingListMap.put(shoppingListEntryId, new ShoppingListEntry(shoppingListEntryId, userId, item, datetime));
-                                            notifyShoppingListDataChangedListeners(shoppingListMap);
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    shoppingListMap.clear();
+                    for (DataSnapshot shoppingListEntrySnapshot : dataSnapshot.getChildren()) {
+                        ShoppingListEntry shoppingListEntry = shoppingListEntrySnapshot.getValue(ShoppingListEntry.class);
+                        shoppingListMap.put(shoppingListEntrySnapshot.getKey(), shoppingListEntry);
+                        notifyShoppingListDataChangedListeners(shoppingListMap);
                     }
                 }
             }
@@ -78,10 +52,12 @@ public class ShoppingList {
 
     void populate(Group group) {
         String groupId = group.getGroupId();
-        Query databaseQuery = FirebaseDatabase.getInstance().getReference().child("groups").orderByKey().equalTo(groupId);
 
-        databaseQuery.addListenerForSingleValueEvent(getShoppingListEventListener(groupId));
-        databaseQuery.addValueEventListener(getShoppingListEventListener(groupId));
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+        DatabaseReference ref = database.getReference("groups/" + Group.getInstance().getGroupId() + "/shoppingList");
+        ref.addListenerForSingleValueEvent(getShoppingListEventListener(groupId));
+        ref.addValueEventListener(getShoppingListEventListener(groupId));
     }
 
     public static HashMap<String, ShoppingListEntry> getShoppingListMap() {
@@ -91,12 +67,34 @@ public class ShoppingList {
     public void addShoppingListDataChangedListeners(ShoppingListDataListener listener) {
         shoppingListDataListeners.add(listener);
     }
+
     public void removeShoppingListDataChangedListeners(ShoppingListDataListener listener) {
         shoppingListDataListeners.remove(listener);
     }
+
     protected void notifyShoppingListDataChangedListeners(HashMap<String, ShoppingListEntry> shoppingListMap) {
-        for (ShoppingListDataListener listener: this.shoppingListDataListeners) {
+        for (ShoppingListDataListener listener : this.shoppingListDataListeners) {
             listener.onShoppingListDataChanged(shoppingListMap);
         }
+    }
+
+    public ShoppingListEntry getShoppingListEntry(String entryId) {
+        return shoppingListMap.get(entryId);
+    }
+
+    public void addShoppingListEntry(ShoppingListEntry shoppingListEntry) {
+        shoppingListMap.put(shoppingListEntry.getEntryId(), shoppingListEntry);
+    }
+
+    public void deleteShoppingListEntry(String id) {
+        shoppingListMap.remove(id);
+    }
+
+    public boolean syncShoppingList() {
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference ref = database.getReference("groups/" + Group.getInstance().getGroupId() + "/shoppingList");
+        ref.setValue(shoppingListMap);
+
+        return true;
     }
 }

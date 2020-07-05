@@ -3,13 +3,27 @@ package de.sowrong.together.data;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class Transaction {
+public class Transaction implements Comparable<Transaction> {
     private String transactionEntryId;
     private String userId;
     private String item;
     private LocalDateTime datetime;
     private double value;
     private DateTimeFormatter dateTimeFormatter;
+    private DateTimeFormatter dateFormatter;
+    private DateTimeFormatter hourMinutesFormater;
+
+    public Transaction(String item) {
+        this.transactionEntryId = Group.randomId();
+        this.userId = Users.getInstance().getOwnId();
+        this.item = item;
+        this.value = 0.0d;
+
+        this.datetime = LocalDateTime.now();
+        this.dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        this.dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        this.hourMinutesFormater = DateTimeFormatter.ofPattern("HH:mm");
+    }
 
     public Transaction(String transactionEntryId, String userId, String item, String datetime, Double value) {
         this.transactionEntryId = transactionEntryId;
@@ -18,6 +32,8 @@ public class Transaction {
         this.value = value;
 
         this.dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        this.dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        this.hourMinutesFormater = DateTimeFormatter.ofPattern("HH:mm");
         this.datetime = LocalDateTime.parse(datetime, dateTimeFormatter);
     }
 
@@ -49,6 +65,10 @@ public class Transaction {
         return datetime;
     }
 
+    public String getDatetimeString() {
+        return datetime.format(dateTimeFormatter);
+    }
+
     public void setDatetime(LocalDateTime datetime) {
         this.datetime = datetime;
     }
@@ -60,4 +80,31 @@ public class Transaction {
     public void setValue(double value) {
         this.value = value;
     }
+
+    public String getDate() {
+        return datetime.format(dateFormatter);
+    }
+
+    public String getTime() {
+        return datetime.format(hourMinutesFormater);
+    }
+
+    public String getValueString() {
+        return String.format("%.2f", value);
+    }
+
+    public void save() {
+        Transactions.getInstance().syncTransactions();
+    }
+
+    public void delete() {
+        Transactions.getInstance().deleteTransaction(this.getTransactionEntryId());
+        save();
+    }
+
+    @Override
+    public int compareTo(Transaction other) {
+        return this.datetime.compareTo(other.getDatetime());
+    }
+
 }

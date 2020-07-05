@@ -4,12 +4,14 @@ import android.util.Log;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Transactions {
     private static String TRANSACTIONS_TAG = "data/Transactions";
@@ -34,41 +36,38 @@ public class Transactions {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot != null) {
-                    for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                        if ((childSnapshot.getKey().equals(groupId))) {
-                            for (DataSnapshot groupSnapshot : childSnapshot.getChildren()) {
-                                if (groupSnapshot.getKey().equals("transactions")) {
-                                    for (DataSnapshot transactionsSnapshot : groupSnapshot.getChildren()) {
-                                        String transactionEntryId = transactionsSnapshot.getKey();
-                                        String userId = "";
-                                        String datetime = "";
-                                        String item = "";
-                                        Double value = null;
+                    transactionMap.clear();
+                    for (DataSnapshot transactionsSnapshot : dataSnapshot.getChildren()) {
+                        String transactionEntryId = transactionsSnapshot.getKey();
+                        String userId = "";
+                        String date = "";
+                        String time = "";
+                        String item = "";
+                        Double value = null;
 
-                                        for (DataSnapshot transactionEntryDetailSnapshot : transactionsSnapshot.getChildren()) {
-                                            switch (transactionEntryDetailSnapshot.getKey()) {
-                                                case "userId":
-                                                    userId = (String) transactionEntryDetailSnapshot.getValue();
-                                                    break;
-                                                case "item":
-                                                    item = (String) transactionEntryDetailSnapshot.getValue();
-                                                    break;
-                                                case "datetime":
-                                                    datetime = (String) transactionEntryDetailSnapshot.getValue();
-                                                    break;
-                                                case "value":
-                                                    value = Double.parseDouble((String) transactionEntryDetailSnapshot.getValue());
-                                                    break;
-                                            }
-                                        }
-
-                                        if (!userId.isEmpty() && !item.isEmpty() && !datetime.isEmpty() && value != null) {
-                                            transactionMap.put(transactionEntryId, new Transaction(transactionEntryId, userId, item, datetime, value));
-                                            notifyTransactionDataChangedListeners(transactionMap);
-                                        }
-                                    }
-                                }
+                        for (DataSnapshot transactionEntryDetailSnapshot : transactionsSnapshot.getChildren()) {
+                            switch (transactionEntryDetailSnapshot.getKey()) {
+                                case "userId":
+                                    userId = (String) transactionEntryDetailSnapshot.getValue();
+                                    break;
+                                case "item":
+                                    item = (String) transactionEntryDetailSnapshot.getValue();
+                                    break;
+                                case "valueString":
+                                    value = Double.parseDouble((String) transactionEntryDetailSnapshot.getValue());
+                                    break;
+                                case "date":
+                                    date = (String) transactionEntryDetailSnapshot.getValue();
+                                    break;
+                                case "time":
+                                    time = (String) transactionEntryDetailSnapshot.getValue();
+                                    break;
                             }
+                        }
+
+                        if (!userId.isEmpty() && !item.isEmpty() && !date.isEmpty() && !time.isEmpty() && value != null) {
+                            transactionMap.put(transactionEntryId, new Transaction(transactionEntryId, userId, item, String.format("%s %s", date, time), value));
+                            notifyTransactionDataChangedListeners(transactionMap);
                         }
                     }
                 }
@@ -82,10 +81,11 @@ public class Transactions {
 
     void populate(Group group) {
         String groupId = group.getGroupId();
-        Query databaseQuery = FirebaseDatabase.getInstance().getReference().child("groups").orderByKey().equalTo(groupId);
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
 
-        databaseQuery.addListenerForSingleValueEvent(getTransactionEventListener(groupId));
-        databaseQuery.addValueEventListener(getTransactionEventListener(groupId));
+        DatabaseReference ref = database.getReference("groups/" + Group.getInstance().getGroupId() + "/transactions");
+        ref.addListenerForSingleValueEvent(getTransactionEventListener(groupId));
+        ref.addValueEventListener(getTransactionEventListener(groupId));
     }
 
     public static HashMap<String, Transaction> getShoppingListMap() {
@@ -95,12 +95,37 @@ public class Transactions {
     public void addTransactionDataChangedListeners(TransactionDataListener listener) {
         transactionDataListeners.add(listener);
     }
+
     public void removeTransactionDataChangedListeners(TransactionDataListener listener) {
         transactionDataListeners.remove(listener);
     }
+
     protected void notifyTransactionDataChangedListeners(HashMap<String, Transaction> transactionMap) {
-        for (TransactionDataListener listener: this.transactionDataListeners) {
+        for (TransactionDataListener listener : this.transactionDataListeners) {
             listener.onTransactionDataChanged(transactionMap);
         }
+    }
+
+    public HashMap<String, Transaction> getTransactionMap() {
+        return transactionMap;
+    }
+
+    public Transaction getTransaction(String transactionId) {
+        return transactionMap.get(transactionId);
+    }
+
+    public void addTransaction(Transaction transaction) {
+        transactionMap.put(transaction.getTransactionEntryId(), transaction);
+    }
+
+    public void deleteTransaction(String id) {
+        transactionMap.remove(id);
+        notifyTransactionDataChangedListeners(transactionMap);
+    }
+
+    public void syncTransactions() {
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference ref = database.getReference("groups/" + Group.getInstance().getGroupId() + "/transactions");
+        ref.setValue(transactionMap);
     }
 }

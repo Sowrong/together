@@ -1,17 +1,10 @@
 package de.sowrong.together.data;
 
-public class CleaningWeekUserTask {
+public class CleaningWeekUserTask implements Comparable<CleaningWeekUserTask> {
     private String entryId;
     private String userId;
     private String dutyId;
     private boolean finished;
-
-    public CleaningWeekUserTask(String entryId, String userId, String dutyId, boolean finished) {
-        this.entryId = entryId;
-        this.userId = userId;
-        this.dutyId = dutyId;
-        this.finished = finished;
-    }
 
     public String getEntryId() {
         return entryId;
@@ -43,5 +36,17 @@ public class CleaningWeekUserTask {
 
     public void setFinished(boolean finished) {
         this.finished = finished;
+    }
+
+    @Override
+    public int compareTo(CleaningWeekUserTask other) {
+        User ownUser = Users.getInstance().getUserById(this.getUserId());
+        User otherUser = Users.getInstance().getUserById(other.getUserId());
+
+        if (ownUser != null && otherUser != null) {
+            return ownUser.getName().compareTo(otherUser.getName());
+        } else {
+            return 0;
+        }
     }
 }

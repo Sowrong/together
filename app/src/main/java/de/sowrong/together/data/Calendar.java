@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
@@ -38,41 +39,38 @@ public class Calendar {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot != null) {
-                    for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                        if ((childSnapshot.getKey().equals(groupId))) {
-                            for (DataSnapshot groupSnapshot : childSnapshot.getChildren()) {
-                                if (groupSnapshot.getKey().equals("calendar")) {
-                                    for (DataSnapshot calendarEntrySnapshot : groupSnapshot.getChildren()) {
-                                        String entryId = calendarEntrySnapshot.getKey();
-                                        String userId = "";
-                                        String title = "";
-                                        String description = "";
-                                        String datetime = "";
+                    calendarMap.clear();
+                    for (DataSnapshot calendarEntrySnapshot : dataSnapshot.getChildren()) {
+                        String entryId = calendarEntrySnapshot.getKey();
+                        String userId = "";
+                        String title = "";
+                        String details = "";
+                        String date = "";
+                        String time = "";
 
-                                        for (DataSnapshot calendarEntryDetailSnapshot : calendarEntrySnapshot.getChildren()) {
-                                            switch (calendarEntryDetailSnapshot.getKey()) {
-                                                case "userId":
-                                                    userId = (String) calendarEntryDetailSnapshot.getValue();
-                                                    break;
-                                                case "title":
-                                                    title = (String) calendarEntryDetailSnapshot.getValue();
-                                                    break;
-                                                case "description":
-                                                    description = (String) calendarEntryDetailSnapshot.getValue();
-                                                    break;
-                                                case "datetime":
-                                                    datetime = (String) calendarEntryDetailSnapshot.getValue();
-                                                    break;
-                                            }
-                                        }
-
-                                        if (!userId.isEmpty() && !title.isEmpty() && !description.isEmpty() && !datetime.isEmpty()) {
-                                            calendarMap.put(entryId, new CalendarEntry(entryId, userId, title, description, datetime));
-                                            notifyCalendarDataChangedListeners(calendarMap);
-                                        }
-                                    }
-                                }
+                        for (DataSnapshot calendarEntryDetailSnapshot : calendarEntrySnapshot.getChildren()) {
+                            switch (calendarEntryDetailSnapshot.getKey()) {
+                                case "userId":
+                                    userId = (String) calendarEntryDetailSnapshot.getValue();
+                                    break;
+                                case "title":
+                                    title = (String) calendarEntryDetailSnapshot.getValue();
+                                    break;
+                                case "details":
+                                    details = (String) calendarEntryDetailSnapshot.getValue();
+                                    break;
+                                case "date":
+                                    date = (String) calendarEntryDetailSnapshot.getValue();
+                                    break;
+                                case "time":
+                                    time = (String) calendarEntryDetailSnapshot.getValue();
+                                    break;
                             }
+                        }
+
+                        if (!userId.isEmpty() && !title.isEmpty() && !date.isEmpty() && !time.isEmpty()) {
+                            calendarMap.put(entryId, new CalendarEntry(entryId, userId, title, details, String.format("%s %s", date, time)));
+                            notifyCalendarDataChangedListeners(calendarMap);
                         }
                     }
                 }
@@ -87,21 +85,42 @@ public class Calendar {
     void populate(Group group) {
         String groupId = group.getGroupId();
 
-        Query databaseQuery = FirebaseDatabase.getInstance().getReference().child("groups").orderByKey().equalTo(groupId);
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
 
-        databaseQuery.addListenerForSingleValueEvent(getCalendarEventListener(groupId));
-        databaseQuery.addValueEventListener(getCalendarEventListener(groupId));
+        DatabaseReference ref = database.getReference("groups/" + Group.getInstance().getGroupId() + "/calendar");
+        ref.addListenerForSingleValueEvent(getCalendarEventListener(groupId));
+        ref.addValueEventListener(getCalendarEventListener(groupId));
     }
 
     public void addCalendarDataChangedListeners(CalendarDataListener listener) {
         calendarDataListeners.add(listener);
     }
+
     public void removeCalendarDataChangedListeners(CalendarDataListener listener) {
         calendarDataListeners.remove(listener);
     }
+
     protected void notifyCalendarDataChangedListeners(HashMap<String, CalendarEntry> calendarMap) {
-        for (CalendarDataListener listener: this.calendarDataListeners) {
+        for (CalendarDataListener listener : this.calendarDataListeners) {
             listener.onCalendarDataChanged(calendarMap);
         }
+    }
+
+    public CalendarEntry getCalendarEntry(String id) {
+        return calendarMap.get(id);
+    }
+
+    public void addCalendarEntry(CalendarEntry calendarEntry) {
+        calendarMap.put(calendarEntry.getEntryId(), calendarEntry);
+    }
+
+    public void deleteCalendarEntry(String id) {
+        calendarMap.remove(id);
+    }
+
+    public void syncCalendar() {
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference ref = database.getReference("groups/" + Group.getInstance().getGroupId() + "/calendar");
+        ref.setValue(calendarMap);
     }
 }
