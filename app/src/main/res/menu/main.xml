@@ -8,9 +8,15 @@
         android:title="@string/action_settings"
         app:showAsAction="never" />
 
-        <item
-            android:id="@+id/action_logout"
-            android:orderInCategory="101"
-            android:title="Logout"
-            app:showAsAction="never" />
+    <item
+        android:id="@+id/action_leave_group"
+        android:orderInCategory="101"
+        android:title="Gruppe verlassen"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_logout"
+        android:orderInCategory="102"
+        android:title="Ausloggen"
+        app:showAsAction="never" />
 </menu>

@@ -15,7 +15,7 @@ public class CalendarEntry implements Comparable<CalendarEntry> {
     private DateTimeFormatter hourMinutesFormater;
 
     public CalendarEntry() {
-        this.entryId = Group.randomId();
+        this.entryId = Group.randomId(Group.ID_LENGTH);
         this.userId = Users.getInstance().getOwnId();
         this.title = "";
         this.details = "";

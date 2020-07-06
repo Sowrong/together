@@ -76,7 +76,7 @@ public class NewEditTransactionActivity extends AppCompatActivity {
             }
             datePicker = new DatePickerDialog(NewEditTransactionActivity.this,
                     (viewDatePicker, year, monthOfYear, dayOfMonth) -> {
-                        editTextDate.setText(String.format("%4d-%02d-%02d", year, monthOfYear, dayOfMonth));
+                        editTextDate.setText(String.format("%4d-%02d-%02d", year, (monthOfYear + 1), dayOfMonth));
 
                         LocalDateTime dateTime = transaction.getDatetime();
 
@@ -85,7 +85,7 @@ public class NewEditTransactionActivity extends AppCompatActivity {
                         dateTime = dateTime.withDayOfMonth(dayOfMonth);
 
                         transaction.setDatetime(dateTime);
-                    }, transaction.getDatetime().getYear(), transaction.getDatetime().getMonthValue(), transaction.getDatetime().getDayOfMonth());
+                    }, transaction.getDatetime().getYear(), transaction.getDatetime().getMonthValue() - 1, transaction.getDatetime().getDayOfMonth());
             datePicker.show();
         });
 

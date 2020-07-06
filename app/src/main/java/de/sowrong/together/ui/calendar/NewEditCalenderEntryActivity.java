@@ -65,7 +65,7 @@ public class NewEditCalenderEntryActivity extends AppCompatActivity {
             }
             datePicker = new DatePickerDialog(NewEditCalenderEntryActivity.this,
                     (viewDatePicker, year, monthOfYear, dayOfMonth) -> {
-                        editTextDate.setText(String.format("%4d-%02d-%02d", year, monthOfYear, dayOfMonth));
+                        editTextDate.setText(String.format("%4d-%02d-%02d", year, (monthOfYear + 1), dayOfMonth));
 
                         LocalDateTime dateTime = calendarEntry.getDatetime();
 
@@ -74,7 +74,7 @@ public class NewEditCalenderEntryActivity extends AppCompatActivity {
                         dateTime = dateTime.withDayOfMonth(dayOfMonth);
 
                         calendarEntry.setDatetime(dateTime);
-                    }, calendarEntry.getDatetime().getYear(), calendarEntry.getDatetime().getMonthValue(), calendarEntry.getDatetime().getDayOfMonth());
+                    }, calendarEntry.getDatetime().getYear(), calendarEntry.getDatetime().getMonthValue() - 1, calendarEntry.getDatetime().getDayOfMonth());
             datePicker.show();
         });
 

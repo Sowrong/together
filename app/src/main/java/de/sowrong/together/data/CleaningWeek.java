@@ -8,8 +8,10 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CleaningWeek implements Comparable<CleaningWeek> {
     private LocalDateTime date;
@@ -18,6 +20,35 @@ public class CleaningWeek implements Comparable<CleaningWeek> {
     public CleaningWeek(String week) {
         date = parseStringAsCalendarWeek(week).truncatedTo(ChronoUnit.DAYS);
         userTasks = new HashMap<>();
+    }
+
+    public boolean initUserTasks(int weekNumber) {
+        HashMap<String, Member> memberMap = Members.getInstance().getMemberMap();
+
+        if (memberMap.size() == 0) {
+            return false;
+        }
+
+        Collection<Member> values = memberMap.values();
+        ArrayList<Member> members = new ArrayList<>(values);
+
+        AtomicInteger memberIndex = new AtomicInteger(0);
+
+        Cleaning.getInstance().getDutiesMap().entrySet().forEach(
+                entry -> {
+                    String dutyId = entry.getKey();
+                    String userId = members.get((memberIndex.getAndIncrement() + weekNumber) % members.size()).getId();
+
+                    CleaningWeekUserTask cleaningWeekUserTask = new CleaningWeekUserTask();
+                    cleaningWeekUserTask.setDutyId(dutyId);
+                    cleaningWeekUserTask.setUserId(userId);
+                    cleaningWeekUserTask.setFinished(false);
+
+                    userTasks.put(Group.randomId(8), cleaningWeekUserTask);
+                }
+        );
+
+        return true;
     }
 
     public static LocalDateTime parseStringAsCalendarWeek(String input) {

@@ -24,7 +24,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.IsoFields;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -122,9 +125,6 @@ public class CleaningFragment extends Fragment {
     }
 
     private void redrawCleaningList() {
-        if (cleaningMap == null || cleaningMap.isEmpty())
-            return;
-
         TextView calendarWeekTextView = root.findViewById(R.id.calendarWeekTextView);
 
         String selectedWeekDateString = CleaningWeek.getWeekStringFromLocalDate(displayDateTime);
@@ -136,9 +136,28 @@ public class CleaningFragment extends Fragment {
 
         cleaningGroup.removeAllViews();
 
+
+        if (cleaningMap == null)
+            return;
+
+        String displayWeekString = CleaningWeek.getWeekStringFromLocalDate(displayDateTime);
+
+        if (cleaningMap.isEmpty() || !cleaningMap.containsKey(displayWeekString)) {
+            CleaningWeek cleaningWeek = new CleaningWeek(displayWeekString);
+
+            DateTimeFormatter weekFormater = new DateTimeFormatterBuilder()
+                    .appendValue(IsoFields.WEEK_OF_WEEK_BASED_YEAR).toFormatter();
+
+            int week = Integer.parseInt(displayDateTime.format(weekFormater));
+
+            if (cleaningWeek.initUserTasks(week)) {
+                cleaningMap.put(displayWeekString, cleaningWeek);
+                cleaningWeek.save();
+            }
+        }
+
         cleaningMap.entrySet().stream()
                 .filter(element -> {
-                    String displayWeekString = CleaningWeek.getWeekStringFromLocalDate(displayDateTime);
                     String listElementWeekString = CleaningWeek.getWeekStringFromLocalDate(element.getValue().getDate());
                     return displayWeekString.equals(listElementWeekString);
                 })
@@ -148,7 +167,7 @@ public class CleaningFragment extends Fragment {
                     userTasks.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach(
                             userTaskEntry -> {
                                 CleaningWeekUserTask userTask = userTaskEntry.getValue();
-                                if (dutiesMap.size() > 0 && dutiesMap.containsKey(userTask.getDutyId())) {
+                                if (dutiesMap != null && dutiesMap.size() > 0 && dutiesMap.containsKey(userTask.getDutyId())) {
                                     ArrayList<Duty> duties = dutiesMap.get(userTask.getDutyId());
                                     if (duties.size() > 0) {
                                         for (Duty duty : duties) {
@@ -166,7 +185,6 @@ public class CleaningFragment extends Fragment {
     public void fabClickListener() {
         // goto current week
         setDisplayTimeToNow();
-        redrawCleaningList();
 
         // mark all own events as done
         cleaningMap.entrySet().stream()
@@ -180,11 +198,13 @@ public class CleaningFragment extends Fragment {
                     userTasks.entrySet().stream().forEach(
                             userTaskEntry -> {
                                 if (userTaskEntry.getValue().getUserId().equals(Users.getOwnId())) {
-                                    userTaskEntry.getValue().setFinished(true);
+                                    boolean oldFinishedValue = userTaskEntry.getValue().isFinished();
+                                    userTaskEntry.getValue().setFinished(!oldFinishedValue);
                                 }
                             });
                 });
 
+        redrawCleaningList();
         Cleaning.getInstance().syncCleaning();
     }
 

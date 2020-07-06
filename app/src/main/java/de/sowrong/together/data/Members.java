@@ -24,6 +24,10 @@ public class Members {
         listeners = new ArrayList<>();
     }
 
+    public HashMap<String, Member> getMemberMap() {
+        return membersMap;
+    }
+
     public int getNumberMembers() {
         return membersMap.size();
     }

@@ -14,7 +14,7 @@ public class Transaction implements Comparable<Transaction> {
     private DateTimeFormatter hourMinutesFormater;
 
     public Transaction(String item) {
-        this.transactionEntryId = Group.randomId();
+        this.transactionEntryId = Group.randomId(Group.ID_LENGTH);
         this.userId = Users.getInstance().getOwnId();
         this.item = item;
         this.value = 0.0d;

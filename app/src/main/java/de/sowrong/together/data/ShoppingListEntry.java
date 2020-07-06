@@ -8,7 +8,7 @@ public class ShoppingListEntry {
     private String item;
 
     public ShoppingListEntry() {
-        this.entryId = Group.randomId();
+        this.entryId = Group.randomId(Group.ID_LENGTH);
         this.item = "";
     }
 

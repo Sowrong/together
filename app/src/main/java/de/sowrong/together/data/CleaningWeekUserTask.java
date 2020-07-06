@@ -1,18 +1,9 @@
 package de.sowrong.together.data;
 
 public class CleaningWeekUserTask implements Comparable<CleaningWeekUserTask> {
-    private String entryId;
     private String userId;
     private String dutyId;
     private boolean finished;
-
-    public String getEntryId() {
-        return entryId;
-    }
-
-    public void setEntryId(String entryId) {
-        this.entryId = entryId;
-    }
 
     public String getUserId() {
         return userId;

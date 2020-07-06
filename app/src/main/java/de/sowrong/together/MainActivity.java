@@ -14,6 +14,7 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.ScaleAnimation;
+import android.widget.Button;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
@@ -27,7 +28,11 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -48,9 +53,13 @@ import androidx.viewpager2.widget.ViewPager2;
 import java.util.Arrays;
 import java.util.List;
 
+import de.sowrong.together.data.User;
 import de.sowrong.together.data.Users;
+import de.sowrong.together.ui.calendar.DetailsCalenderEntryActivity;
 import de.sowrong.together.ui.calendar.NewEditCalenderEntryActivity;
 import de.sowrong.together.ui.cleaning.CleaningFragment;
+import de.sowrong.together.ui.init.CreateGroupActivity;
+import de.sowrong.together.ui.init.JoinGroupActivity;
 import de.sowrong.together.ui.shoppingList.NewEditShoppingListEntryActivity;
 import de.sowrong.together.ui.wallet.NewEditTransactionActivity;
 
@@ -65,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private Context context;
+
+    private boolean joinedGroup;
 
     TabLayout tabLayout;
     NavigationView navigationView;
@@ -83,7 +94,71 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         context = this;
+        joinedGroup = false;
+        //FirebaseDatabase.getInstance().setPersistenceEnabled(true); TODO Enable
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (!joinedGroup) {
+            mAuth = FirebaseAuth.getInstance();
+            FirebaseUser user = mAuth.getCurrentUser();
+
+            if (user != null) {
+                // User is signed in
+                Log.d("Firebase", "User: " + user.getDisplayName() + " is logged in");
+
+                FirebaseDatabase db = FirebaseDatabase.getInstance();
+                FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+
+                DatabaseReference usersReference = db.getReference().child("users/" + firebaseUser.getUid() + "/");
+
+                usersReference.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot != null) {
+                            User user = dataSnapshot.getValue(User.class);
+
+                            if (!user.getGroupId().isEmpty()) {
+                                joinedGroup = true;
+                                createDefaultInterface();
+                            } else {
+                                createNewOrJoinGroupInterface();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                        Log.e("MAIN", "failed to update users", error.toException());
+                    }
+                });
+            } else {
+                // No user is signed in
+                createSignInIntent();
+            }
+        }
+    }
+
+    private void createNewOrJoinGroupInterface() {
+        setContentView(R.layout.activity_select_join_new_group);
+
+        findViewById(R.id.newGroup).setOnClickListener(view ->
+        {
+            Intent intent = new Intent(context, CreateGroupActivity.class);
+            startActivity(intent);
+        });
+
+        findViewById(R.id.joinGroup).setOnClickListener(view ->
+        {
+            Intent intent = new Intent(context, JoinGroupActivity.class);
+            startActivity(intent);
+        });
+    }
+
+    private void createDefaultInterface() {
         setContentView(R.layout.activity_main);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -99,34 +174,31 @@ public class MainActivity extends AppCompatActivity {
 
         navigationView = findViewById(R.id.nav_view);
 
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                item.setChecked(true);
+        navigationView.setNavigationItemSelectedListener((NavigationView.OnNavigationItemSelectedListener) item -> {
+            item.setChecked(true);
 
-                switch (item.getItemId()) {
-                    case R.id.nav_cleaning:
-                        tabLayout.selectTab(tabLayout.getTabAt(0));
-                        break;
-                    case R.id.nav_calendar:
-                        tabLayout.selectTab(tabLayout.getTabAt(1));
-                        break;
-                    case R.id.nav_wallet:
-                        tabLayout.selectTab(tabLayout.getTabAt(2));
-                        break;
-                    case R.id.nav_shopping_list:
-                        tabLayout.selectTab(tabLayout.getTabAt(3));
-                        break;
-                }
-
-                DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-                drawer.closeDrawer(GravityCompat.START);
-
-
-                item.setChecked(false);
-
-                return false;
+            switch (item.getItemId()) {
+                case R.id.nav_cleaning:
+                    tabLayout.selectTab(tabLayout.getTabAt(0));
+                    break;
+                case R.id.nav_calendar:
+                    tabLayout.selectTab(tabLayout.getTabAt(1));
+                    break;
+                case R.id.nav_wallet:
+                    tabLayout.selectTab(tabLayout.getTabAt(2));
+                    break;
+                case R.id.nav_shopping_list:
+                    tabLayout.selectTab(tabLayout.getTabAt(3));
+                    break;
             }
+
+            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+            drawer.closeDrawer(GravityCompat.START);
+
+
+            item.setChecked(false);
+
+            return false;
         });
 
         previousTabPosition = TAB_CLEANING;
@@ -164,17 +236,11 @@ public class MainActivity extends AppCompatActivity {
                         startActivity(intent);
                         break;
                 }
-                /*
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-                 */
             }
         });
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
 
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
         new AppBarConfiguration.Builder(
                 R.id.nav_cleaning, R.id.nav_calendar, R.id.nav_wallet, R.id.nav_shopping_list)
                 .setDrawerLayout(drawer)
@@ -186,30 +252,28 @@ public class MainActivity extends AppCompatActivity {
         viewPager.setAdapter(new ViewPagerAdapter(this));
 
         new TabLayoutMediator(tabLayout, viewPager,
-                new TabLayoutMediator.TabConfigurationStrategy() {
-                    @Override public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {
-                        switch(position) {
-                            case TAB_CLEANING:
-                                tab.setText(R.string.tab_cleaning);
-                                tab.setIcon(R.drawable.ic_tab_cleaning);
-                                tab.getIcon().setAlpha(255);
-                                break;
-                            case TAB_CALENDAR:
-                                tab.setText(R.string.tab_calendar);
-                                tab.setIcon(R.drawable.ic_tab_calendar);
-                                tab.getIcon().setAlpha(128);
-                                break;
-                            case TAB_WALLET:
-                                tab.setText(R.string.tab_wallet);
-                                tab.setIcon(R.drawable.ic_tab_wallet);
-                                tab.getIcon().setAlpha(128);
-                                break;
-                            case TAB_SHOPPING_LIST:
-                                tab.setText(R.string.tab_shopping_list);
-                                tab.setIcon(R.drawable.ic_tab_shopping_list);
-                                tab.getIcon().setAlpha(128);
-                                break;
-                        }
+                (tab, position) -> {
+                    switch (position) {
+                        case TAB_CLEANING:
+                            tab.setText(R.string.tab_cleaning);
+                            tab.setIcon(R.drawable.ic_tab_cleaning);
+                            tab.getIcon().setAlpha(255);
+                            break;
+                        case TAB_CALENDAR:
+                            tab.setText(R.string.tab_calendar);
+                            tab.setIcon(R.drawable.ic_tab_calendar);
+                            tab.getIcon().setAlpha(128);
+                            break;
+                        case TAB_WALLET:
+                            tab.setText(R.string.tab_wallet);
+                            tab.setIcon(R.drawable.ic_tab_wallet);
+                            tab.getIcon().setAlpha(128);
+                            break;
+                        case TAB_SHOPPING_LIST:
+                            tab.setText(R.string.tab_shopping_list);
+                            tab.setIcon(R.drawable.ic_tab_shopping_list);
+                            tab.getIcon().setAlpha(128);
+                            break;
                     }
                 }).attach();
 
@@ -241,57 +305,37 @@ public class MainActivity extends AppCompatActivity {
         });
 
         setFloatingActionButtonStyleByTabId(tabLayout.getSelectedTabPosition());
-
-        mAuth = FirebaseAuth.getInstance();
-
-        FirebaseUser user = mAuth.getCurrentUser();
-
-        if (user != null) {
-            // User is signed in
-            Log.d("Firebase", "User: " + user.getDisplayName() + " is logged in");
-
-
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            FirebaseDatabase.getInstance().setPersistenceEnabled(true);
-
-            db.collection("users")
-                    .get()
-                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                        @Override
-                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                            if (task.isSuccessful()) {
-                                for (QueryDocumentSnapshot document : task.getResult()) {
-                                    if (document.getId().equals(user.getUid())) {
-                                        Log.d("Firebase", "User: " + document.getData().get("nickname") + " is in group " + document.getData().get("group"));
-                                    }
-                                    Log.d("Firebase", document.getId() + " => " + document.getData());
-                                }
-                            } else {
-                                Log.w("Firebase", "Error getting documents.", task.getException());
-                            }
-                        }
-                    });
-
-            Log.d("Firebase", "DB request created");
-        } else {
-            // No user is signed in
-            createSignInIntent();
-        }
-
-        Users.getInstance();
     }
 
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
         switch (item.getItemId()) {
+            case R.id.action_leave_group:
+                leaveGroup();
+                return true;
             case R.id.action_logout:
                 signOutAccount();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void leaveGroup() {
+        User self = Users.getInstance().getUserById(Users.getOwnId());
+
+        joinedGroup = false;
+
+        if (self != null) {
+            self.setGroupId("");
+
+            final FirebaseDatabase database = FirebaseDatabase.getInstance();
+            DatabaseReference ref = database.getReference("users/" + self.getId());
+            ref.setValue(self);
+        }
+
+        onResume();
     }
 
     public void createSignInIntent() {
@@ -387,7 +431,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
@@ -405,14 +448,4 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-/*
-    @Override
-    public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
-                || super.onSupportNavigateUp();
-    }
- */
-
 }

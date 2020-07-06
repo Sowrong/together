@@ -15,7 +15,7 @@ import java.util.Random;
 
 public class Group {
     private static final String GROUP_TAG = "data/Group";
-    private static final int ID_LENGTH = 128;
+    public static final int ID_LENGTH = 128;
 
     private static String ownUserId;
     private static String groupId;
@@ -37,8 +37,10 @@ public class Group {
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-        if (user == null)
+        if (user == null) {
+            Log.e(GROUP_TAG, "FIREBASE ERROR: user not logged in");
             return;
+        }
 
         ownUserId = user.getUid();
 
@@ -182,14 +184,14 @@ public class Group {
         }
     }
 
-    public static String randomId() {
+    public static String randomId(int length) {
         int leftLimit = 48; // numeral '0'
         int rightLimit = 122; // letter 'z'
         Random random = new Random();
 
         return random.ints(leftLimit, rightLimit + 1)
                 .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
-                .limit(ID_LENGTH)
+                .limit(length)
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
     }

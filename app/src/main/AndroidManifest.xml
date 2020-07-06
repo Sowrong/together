@@ -22,6 +22,14 @@
         </activity>
 
         <activity
+            android:name=".ui.init.CreateGroupActivity"
+            android:parentActivityName=".MainActivity"></activity>
+
+        <activity
+            android:name=".ui.init.JoinGroupActivity"
+            android:parentActivityName=".MainActivity"></activity>
+
+        <activity
             android:name=".ui.calendar.NewEditCalenderEntryActivity"
             android:parentActivityName=".MainActivity"></activity>
 
