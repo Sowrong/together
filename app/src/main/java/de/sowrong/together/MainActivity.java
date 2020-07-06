@@ -55,6 +55,7 @@ import java.util.List;
 
 import de.sowrong.together.data.User;
 import de.sowrong.together.data.Users;
+import de.sowrong.together.ui.SettingsActivity;
 import de.sowrong.together.ui.calendar.DetailsCalenderEntryActivity;
 import de.sowrong.together.ui.calendar.NewEditCalenderEntryActivity;
 import de.sowrong.together.ui.cleaning.CleaningFragment;
@@ -323,6 +324,10 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_logout:
                 signOutAccount();
                 joinedGroup = false;
+                return true;
+            case R.id.action_settings:
+                Intent intent = new Intent(context, SettingsActivity.class);
+                startActivity(intent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

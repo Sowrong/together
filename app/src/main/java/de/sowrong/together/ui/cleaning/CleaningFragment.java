@@ -59,7 +59,7 @@ public class CleaningFragment extends Fragment {
     private CleaningViewModel model;
     private HashMap<String, Member> membersMap;
     private HashMap<String, CleaningWeek> cleaningMap;
-    private HashMap<String, ArrayList<Duty>> dutiesMap;
+    private HashMap<String, Duty> dutiesMap;
     private LocalDateTime displayDateTime;
     private View root;
     private Context context;
@@ -175,13 +175,10 @@ public class CleaningFragment extends Fragment {
                             userTaskEntry -> {
                                 CleaningWeekUserTask userTask = userTaskEntry.getValue();
                                 if (dutiesMap != null && dutiesMap.size() > 0 && dutiesMap.containsKey(userTask.getDutyId())) {
-                                    ArrayList<Duty> duties = dutiesMap.get(userTask.getDutyId());
-                                    if (duties.size() > 0) {
-                                        for (Duty duty : duties) {
-                                            boolean finished = userTask.isFinished();
-
-                                            cleaningGroup.addView(createCleaningItem(inflater, userTask, duty, finished));
-                                        }
+                                    Duty duty = dutiesMap.get(userTask.getDutyId());
+                                    if (duty != null) {
+                                        boolean finished = userTask.isFinished();
+                                        cleaningGroup.addView(createCleaningItem(inflater, userTask, duty, finished));
                                     }
                                 }
                             }

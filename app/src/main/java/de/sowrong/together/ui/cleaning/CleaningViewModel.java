@@ -23,7 +23,7 @@ public class CleaningViewModel extends ViewModel {
 
     private MutableLiveData<HashMap<String, Member>> members;
     private MutableLiveData<HashMap<String, CleaningWeek>> cleaning;
-    private MutableLiveData<HashMap<String, ArrayList<Duty>>> duties;
+    private MutableLiveData<HashMap<String, Duty>> duties;
 
     public CleaningViewModel() {
         members = new MutableLiveData<>();
@@ -42,8 +42,9 @@ public class CleaningViewModel extends ViewModel {
             public void onCleaningDataChanged(HashMap<String, CleaningWeek> cleaningMap) {
                 cleaning.setValue(cleaningMap);
             }
+
             @Override
-            public void onDutyDataChanged(HashMap<String, ArrayList<Duty>> dutiesMap) {
+            public void onDutyDataChanged(HashMap<String, Duty> dutiesMap) {
                 duties.setValue(dutiesMap);
             }
         });
@@ -52,10 +53,12 @@ public class CleaningViewModel extends ViewModel {
     public LiveData<HashMap<String, Member>> getMembers() {
         return members;
     }
+
     public LiveData<HashMap<String, CleaningWeek>> getCleaning() {
         return cleaning;
     }
-    public LiveData<HashMap<String, ArrayList<Duty>>> getDuties() {
+
+    public LiveData<HashMap<String, Duty>> getDuties() {
         return duties;
     }
 }

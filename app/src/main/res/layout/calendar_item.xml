@@ -10,7 +10,7 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/card"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/cleaning_height"
+        android:layout_height="@dimen/arrow_height"
         android:layout_marginBottom="15dp"
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"

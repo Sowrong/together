@@ -11,7 +11,7 @@
     <androidx.cardview.widget.CardView
         android:id="@+id/card"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/cleaning_height"
+        android:layout_height="@dimen/arrow_height"
         android:layout_marginBottom="15dp"
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
@@ -30,7 +30,7 @@
 
             <ImageView
                 android:id="@+id/icon"
-                android:layout_width="@dimen/cleaning_height"
+                android:layout_width="@dimen/arrow_height"
                 android:layout_height="match_parent"
                 android:layout_marginLeft="10dp"
                 android:layout_marginTop="10dp"

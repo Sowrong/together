@@ -49,6 +49,9 @@
             android:name=".ui.shoppingList.NewEditShoppingListEntryActivity"
             android:parentActivityName=".MainActivity"></activity>
 
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:parentActivityName=".MainActivity"></activity>
     </application>
 
 </manifest>

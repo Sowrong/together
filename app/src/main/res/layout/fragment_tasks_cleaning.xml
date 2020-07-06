@@ -13,7 +13,7 @@
 
         <ImageView
             android:id="@+id/leftArrowImageView"
-            android:layout_width="@dimen/cleaning_height"
+            android:layout_width="@dimen/arrow_height"
             android:layout_height="match_parent"
             android:src="@drawable/ic_arrow_left"
             android:tint="@color/darkGrey"
@@ -37,7 +37,7 @@
 
         <ImageView
             android:id="@+id/rightArrowImageView"
-            android:layout_width="@dimen/cleaning_height"
+            android:layout_width="@dimen/arrow_height"
             android:layout_height="match_parent"
             android:src="@drawable/ic_arrow_right"
             android:tint="@color/darkGrey"

@@ -71,8 +71,9 @@ public class Group {
                                         public void onCleaningDataChanged(HashMap<String, CleaningWeek> cleaningMap) {
                                             notifyCleaningDataChangedListeners(cleaningMap);
                                         }
+
                                         @Override
-                                        public void onDutyDataChanged(HashMap<String, ArrayList<Duty>> dutiesMap) {
+                                        public void onDutyDataChanged(HashMap<String, Duty> dutiesMap) {
                                             notifyDutyDataChangedListeners(dutiesMap);
                                         }
                                     });
@@ -145,13 +146,15 @@ public class Group {
     public void removeCleaningDataChangedListeners(CalendarDataListener listener) {
         cleaningDataListeners.remove(listener);
     }
+
     protected void notifyCleaningDataChangedListeners(HashMap<String, CleaningWeek> cleaningMap) {
-        for (CleaningDataListener listener: this.cleaningDataListeners) {
+        for (CleaningDataListener listener : this.cleaningDataListeners) {
             listener.onCleaningDataChanged(cleaningMap);
         }
     }
-    protected void notifyDutyDataChangedListeners(HashMap<String, ArrayList<Duty>> dutyMap) {
-        for (CleaningDataListener listener: this.cleaningDataListeners) {
+
+    protected void notifyDutyDataChangedListeners(HashMap<String, Duty> dutyMap) {
+        for (CleaningDataListener listener : this.cleaningDataListeners) {
             listener.onDutyDataChanged(dutyMap);
         }
     }

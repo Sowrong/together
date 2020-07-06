@@ -9,6 +9,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -16,7 +17,7 @@ public class Cleaning {
     private static String CLEANING_TAG = "data/Cleaning";
     private static Cleaning instance;
 
-    private static HashMap<String, ArrayList<Duty>> dutiesMap;
+    private static HashMap<String, Duty> dutiesMap;
     private static HashMap<String, CleaningWeek> cleaningMap;
 
     private static ArrayList<CleaningDataListener> cleaningDataListeners;
@@ -34,11 +35,15 @@ public class Cleaning {
         return instance;
     }
 
+    public void setCleaningMap(HashMap<String, Duty> dutiesMap) {
+        this.dutiesMap = dutiesMap;
+    }
+
     public HashMap<String, CleaningWeek> getCleaningMap() {
         return cleaningMap;
     }
 
-    public HashMap<String, ArrayList<Duty>> getDutiesMap() {
+    public HashMap<String, Duty> getDutiesMap() {
         return dutiesMap;
     }
 
@@ -51,13 +56,8 @@ public class Cleaning {
 
                     for (DataSnapshot dutiesSnapshot : dataSnapshot.getChildren()) {
                         String dutyId = dutiesSnapshot.getKey();
-                        ArrayList<Duty> dutiesSet = new ArrayList<>();
-
-                        for (DataSnapshot dutySnapshot : dutiesSnapshot.getChildren()) {
-                            Duty duty = dutySnapshot.getValue(Duty.class);
-                            dutiesSet.add(duty);
-                        }
-                        dutiesMap.put(dutyId, dutiesSet);
+                        Duty duty = dutiesSnapshot.getValue(Duty.class);
+                        dutiesMap.put(dutyId, duty);
                     }
                     notifyDutyDataChangedListeners(dutiesMap);
                 }
@@ -129,10 +129,15 @@ public class Cleaning {
         }
     }
 
-    protected void notifyDutyDataChangedListeners(HashMap<String, ArrayList<Duty>> dutyMap) {
+    protected void notifyDutyDataChangedListeners(HashMap<String, Duty> dutiesMap) {
         for (CleaningDataListener listener : this.cleaningDataListeners) {
-            listener.onDutyDataChanged(dutyMap);
+            listener.onDutyDataChanged(dutiesMap);
         }
+    }
+
+    public void deleteCurrentWeek() {
+        String currentWeek = CleaningWeek.getWeekStringFromLocalDate(LocalDateTime.now());
+        cleaningMap.remove(currentWeek);
     }
 
     public void syncCleaning() {
