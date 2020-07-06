@@ -103,16 +103,13 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if (!joinedGroup) {
-            mAuth = FirebaseAuth.getInstance();
-            FirebaseUser user = mAuth.getCurrentUser();
+            FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
-            if (user != null) {
+            if (firebaseUser != null) {
                 // User is signed in
-                Log.d("Firebase", "User: " + user.getDisplayName() + " is logged in");
+                Log.d("Firebase", "User: " + firebaseUser.getDisplayName() + " is logged in");
 
                 FirebaseDatabase db = FirebaseDatabase.getInstance();
-                FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-
                 DatabaseReference usersReference = db.getReference().child("users/" + firebaseUser.getUid() + "/");
 
                 usersReference.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -121,11 +118,20 @@ public class MainActivity extends AppCompatActivity {
                         if (dataSnapshot != null) {
                             User user = dataSnapshot.getValue(User.class);
 
-                            if (!user.getGroupId().isEmpty()) {
+                            if (user == null) { // user doesn't exists in database
+                                user = new User();
+                                user.setId(firebaseUser.getUid());
+                                user.setName(firebaseUser.getDisplayName());
+                                usersReference.setValue(user);
+                                joinedGroup = false;
+                                onResume();
+                            }
+
+                            if (user.getGroupId() == null || user.getGroupId().isEmpty()) {
+                                createNewOrJoinGroupInterface();
+                            } else {
                                 joinedGroup = true;
                                 createDefaultInterface();
-                            } else {
-                                createNewOrJoinGroupInterface();
                             }
                         }
                     }
@@ -438,6 +444,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (joinedGroup == false) {
+            onResume();
+            return;
+        }
 
         if (resultCode == Activity.RESULT_OK) {
             // Get String data from Intent
