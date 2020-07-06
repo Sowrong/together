@@ -72,6 +72,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center_vertical|left"
                 android:textColor="@color/darkGrey"
+                android:singleLine="true"
                 android:maxLength="30"
                 android:textSize="20sp" />
         </LinearLayout>

@@ -37,10 +37,14 @@ import de.sowrong.together.ui.wallet.WalletViewModel;
 public class CalendarFragment extends Fragment {
     private CalendarViewModel model;
     private HashMap<String, CalendarEntry> calendarMap;
+    private View root;
+    private LayoutInflater inflater;
+    private Long millis;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_tasks_calendar, container, false);
+        root = inflater.inflate(R.layout.fragment_tasks_calendar, container, false);
+        this.inflater = inflater;
 
         model = ViewModelProviders.of(this).get(CalendarViewModel.class);
 
@@ -49,27 +53,28 @@ public class CalendarFragment extends Fragment {
 
         calendarView.setOnDateChangeListener((view, year, month, day) -> {
             // months are indexed 0-11
-            LocalDateTime time = LocalDateTime.of(year, (month+1), day, 0, 0, 0);
-            long millis = time.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            LocalDateTime time = LocalDateTime.of(year, (month + 1), day, 0, 0, 0);
+            millis = time.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-            redrawCalendarList(root, inflater, millis);
+            redrawCalendarList();
         });
 
         model.getCalendar().observe(this, calendarMap -> {
             this.calendarMap = calendarMap;
-            redrawCalendarList(root, inflater, calendarView.getDate());
+            millis = calendarView.getDate();
+            redrawCalendarList();
         });
 
         return root;
     }
 
 
-    private void redrawCalendarList(View root, @NonNull LayoutInflater inflater, Long millis) {
-        if (calendarMap.isEmpty())
-            return;
-
+    private void redrawCalendarList() {
         ViewGroup calendarGroup = root.findViewById(R.id.calendarItems);
         calendarGroup.removeAllViews();
+
+        if (calendarMap == null || calendarMap.isEmpty())
+            return;
 
         Instant instant = Instant.ofEpochMilli(millis);
         LocalDateTime date = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
@@ -108,5 +113,11 @@ public class CalendarFragment extends Fragment {
         });
 
         return calendarItem;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        redrawCalendarList();
     }
 }

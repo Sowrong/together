@@ -45,27 +45,30 @@ import de.sowrong.together.ui.wallet.WalletViewModel;
 public class ShoppingListFragment extends Fragment {
     private ShoppingListViewModel model;
     private HashMap<String, ShoppingListEntry> shoppingListMap;
+    private View root;
+    private LayoutInflater inflater;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_tasks_shopping_list, container, false);
+        root = inflater.inflate(R.layout.fragment_tasks_shopping_list, container, false);
+        this.inflater = inflater;
 
         model = ViewModelProviders.of(requireActivity()).get(ShoppingListViewModel.class);
 
         model.getShoppingList().observe(this, shoppingListMap -> {
             this.shoppingListMap = shoppingListMap;
-            redrawShoppingItem(root, inflater);
+            redrawShoppingItem();
         });
 
         return root;
     }
 
-    private void redrawShoppingItem(View root, @NonNull LayoutInflater inflater) {
-        if (shoppingListMap.isEmpty())
-            return;
-
+    private void redrawShoppingItem() {
         ViewGroup shoppingListGroup = root.findViewById(R.id.shoppingList);
         shoppingListGroup.removeAllViews();
+
+        if (shoppingListMap.isEmpty())
+            return;
 
         shoppingListMap.entrySet().stream()
                 .forEach(entry -> shoppingListGroup.addView(createShoppingItem(inflater, entry.getValue())));
@@ -97,6 +100,11 @@ public class ShoppingListFragment extends Fragment {
         return shoppingListItem;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        redrawShoppingItem();
+    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {

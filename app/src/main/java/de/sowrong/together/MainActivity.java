@@ -322,6 +322,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             case R.id.action_logout:
                 signOutAccount();
+                joinedGroup = false;
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

@@ -48,8 +48,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center_vertical|left"
-                    android:text=""
                     android:textColor="@color/darkGrey"
+                    android:singleLine="true"
                     android:textSize="20sp" />
             </LinearLayout>
 
@@ -76,6 +76,7 @@
                     android:layout_height="match_parent"
                     android:gravity="center_vertical|left"
                     android:textColor="@color/darkGrey"
+                    android:singleLine="true"
                     android:textSize="20sp"
                     android:inputType="textMultiLine" />
             </LinearLayout>
@@ -103,6 +104,7 @@
                     android:layout_height="match_parent"
                     android:gravity="center_vertical|left"
                     android:textColor="@color/darkGrey"
+                    android:singleLine="true"
                     android:textSize="20sp"
                     android:inputType="date" />
             </LinearLayout>
@@ -131,6 +133,7 @@
                     android:layout_height="match_parent"
                     android:gravity="center_vertical|left"
                     android:textColor="@color/darkGrey"
+                    android:singleLine="true"
                     android:textSize="20sp"
                     android:inputType="time" />
             </LinearLayout>

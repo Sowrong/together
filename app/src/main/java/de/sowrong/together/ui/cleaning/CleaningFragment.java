@@ -128,9 +128,16 @@ public class CleaningFragment extends Fragment {
         TextView calendarWeekTextView = root.findViewById(R.id.calendarWeekTextView);
 
         String selectedWeekDateString = CleaningWeek.getWeekStringFromLocalDate(displayDateTime);
+
+        ImageView nextWeekArrow = root.findViewById(R.id.rightArrowImageView);
+
         if (selectedWeekDateString.equals(CleaningWeek.getCurrentWeekString())) {
+            nextWeekArrow.setEnabled(false);
+            nextWeekArrow.setVisibility(View.INVISIBLE);
             calendarWeekTextView.setText("jetzt");
         } else {
+            nextWeekArrow.setEnabled(true);
+            nextWeekArrow.setVisibility(View.VISIBLE);
             calendarWeekTextView.setText(selectedWeekDateString);
         }
 
