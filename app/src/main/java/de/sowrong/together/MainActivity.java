@@ -54,6 +54,8 @@ import androidx.viewpager2.widget.ViewPager2;
 import java.util.Arrays;
 import java.util.List;
 
+import de.sowrong.together.data.Group;
+import de.sowrong.together.data.Members;
 import de.sowrong.together.data.User;
 import de.sowrong.together.data.Users;
 import de.sowrong.together.ui.SettingsActivity;
@@ -189,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
 
             ((TextView) navigationView.findViewById(R.id.navNameTextView)).setText(username);
             ((TextView) navigationView.findViewById(R.id.navEmailTextView)).setText(email);
+            ((TextView) navigationView.findViewById(R.id.groupIdTextView)).setText(usersMap.get(firebaseUser.getUid()).getGroupId());
         });
 
         navigationView.setNavigationItemSelectedListener((NavigationView.OnNavigationItemSelectedListener) item -> {
