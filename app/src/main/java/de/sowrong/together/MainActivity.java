@@ -331,12 +331,25 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        User self = Users.getInstance().getUserById(Users.getOwnId());
+        if (self == null)
+            return false;
+
         switch (item.getItemId()) {
             case R.id.action_leave_group:
-                leaveGroup();
+                Group.getInstance().leave(self);
+                joinedGroup = false;
+                onResume();
                 return true;
             case R.id.action_logout:
-                signOutAccount();
+                Group.getInstance().logout(self);
+                joinedGroup = false;
+
+                AuthUI.getInstance()
+                        .signOut(this)
+                        .addOnCompleteListener(task -> createSignInIntent());
+
+                onResume();
                 return true;
             case R.id.action_settings:
                 Intent intent = new Intent(context, SettingsActivity.class);
@@ -345,16 +358,6 @@ public class MainActivity extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    private void leaveGroup() {
-        User self = Users.getInstance().getUserById(Users.getOwnId());
-        joinedGroup = false;
-        if (self != null) {
-            Group.getInstance().leave(self);
-        }
-
-        onResume();
     }
 
     public void createSignInIntent() {
@@ -376,18 +379,6 @@ public class MainActivity extends AppCompatActivity {
                 RC_SIGN_IN);
     }
 
-    public void signOutAccount() {
-        AuthUI.getInstance()
-                .signOut(this)
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    public void onComplete(@NonNull Task<Void> task) {
-                        createSignInIntent();
-                    }
-                });
-
-        leaveGroup();
-    }
-
     public void deleteAccount() {
         AuthUI.getInstance()
                 .delete(this)
@@ -398,7 +389,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
-
 
     protected void setFloatingActionButtonStyleByTabId(final int position) {
         if (position < 0) {

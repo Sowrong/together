@@ -184,17 +184,19 @@ public class Group {
     public void leave(User user) {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
 
-        database.getReference("groups/" + user.getGroupId() + "/members/" + user.getId()).removeValue();
-
         user.setGroupId("");
-
+        database.getReference("groups/" + user.getGroupId() + "/members/" + user.getId()).removeValue();
         database.getReference("users/" + user.getId()).setValue(user, (databaseError, databaseReference) -> {
-            Transactions.clear();
-            Members.clear();
-            Cleaning.clear();
-            Calendar.clear();
-            ShoppingList.clear();
-            Users.clear();
+            logout(user);
         });
+    }
+
+    public void logout(User user) {
+        Transactions.clear();
+        Members.clear();
+        Cleaning.clear();
+        Calendar.clear();
+        ShoppingList.clear();
+        Users.clear();
     }
 }

@@ -48,6 +48,7 @@ public class Transactions {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot != null) {
                     transactionMap.clear();
+
                     for (DataSnapshot transactionsSnapshot : dataSnapshot.getChildren()) {
                         String transactionEntryId = transactionsSnapshot.getKey();
                         String userId = "";
@@ -78,9 +79,10 @@ public class Transactions {
 
                         if (!userId.isEmpty() && !item.isEmpty() && !date.isEmpty() && !time.isEmpty() && value != null) {
                             transactionMap.put(transactionEntryId, new Transaction(transactionEntryId, userId, item, String.format("%s %s", date, time), value));
-                            notifyTransactionDataChangedListeners(transactionMap);
                         }
                     }
+
+                    notifyTransactionDataChangedListeners(transactionMap);
                 }
             }
 

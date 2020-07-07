@@ -49,8 +49,8 @@ public class ShoppingList {
                     for (DataSnapshot shoppingListEntrySnapshot : dataSnapshot.getChildren()) {
                         ShoppingListEntry shoppingListEntry = shoppingListEntrySnapshot.getValue(ShoppingListEntry.class);
                         shoppingListMap.put(shoppingListEntrySnapshot.getKey(), shoppingListEntry);
-                        notifyShoppingListDataChangedListeners(shoppingListMap);
                     }
+                    notifyShoppingListDataChangedListeners(shoppingListMap);
                 }
             }
             @Override

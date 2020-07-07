@@ -81,6 +81,7 @@ public class Cleaning {
                         Duty duty = dutiesSnapshot.getValue(Duty.class);
                         dutiesMap.put(dutyId, duty);
                     }
+
                     notifyDutyDataChangedListeners(dutiesMap);
                 }
             }
@@ -114,6 +115,7 @@ public class Cleaning {
                             }
                         }
                     }
+
                     notifyCleaningDataChangedListeners(cleaningMap);
                 }
             }

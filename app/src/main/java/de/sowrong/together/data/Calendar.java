@@ -81,9 +81,9 @@ public class Calendar {
 
                         if (!userId.isEmpty() && !title.isEmpty() && !date.isEmpty() && !time.isEmpty()) {
                             calendarMap.put(entryId, new CalendarEntry(entryId, userId, title, details, String.format("%s %s", date, time)));
-                            notifyCalendarDataChangedListeners(calendarMap);
                         }
                     }
+                    notifyCalendarDataChangedListeners(calendarMap);
                 }
             }
             @Override

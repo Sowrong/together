@@ -58,8 +58,8 @@ public class Users {
                             ownId = id;
                         }
                     }
+
                     notifyUserDataChangedListeners(usersMap);
-                    Log.d(DB_CONNECTOR_TAG, "users updated");
                 }
             }
 

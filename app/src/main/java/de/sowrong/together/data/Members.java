@@ -76,7 +76,6 @@ public class Members {
                             updateBalances(Transactions.getInstance().getTransactionMap());
                         }
 
-                        // TODO Check here if groupID has changed
                         member.setName(user.getName());
 
                         notifyMemberDataChangedListeners(membersMap);
