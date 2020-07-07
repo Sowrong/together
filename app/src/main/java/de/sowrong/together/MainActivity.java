@@ -385,7 +385,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-        joinedGroup = false;
+        leaveGroup();
     }
 
     public void deleteAccount() {
