@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
@@ -43,59 +44,40 @@ public class Group {
         }
 
         ownUserId = user.getUid();
+    }
 
-        FirebaseDatabase db = FirebaseDatabase.getInstance();
-        db.getReference().child("users").orderByKey().equalTo(ownUserId).addListenerForSingleValueEvent(new ValueEventListener() {
+    public void populate(String groupId) {
+        this.groupId = groupId;
+
+        Transactions transactions = Transactions.getInstance();
+        transactions.populate(groupId);
+        transactions.addTransactionDataChangedListeners(transactionsMap -> notifyTransactionDataChangedListeners(transactionsMap));
+
+        Members members = Members.getInstance();
+        members.populate(groupId);
+        members.addMemberDataChangedListeners(membersMap -> notifyMemberDataChangedListeners(membersMap));
+
+        Cleaning cleaning = Cleaning.getInstance();
+        cleaning.populate(groupId);
+        cleaning.addCleaningDataChangedListeners(new CleaningDataListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot != null) {
-                    for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                        if (userSnapshot.getKey().equals(ownUserId)) {
-                            for (DataSnapshot userDetailSnapshot : userSnapshot.getChildren()) {
-                                if (userDetailSnapshot.getKey().equals("groupId")) {
-                                    groupId = (String) userDetailSnapshot.getValue();
-                                    Log.d(GROUP_TAG, "user " + ownUserId + " found, adding members to group: " + groupId);
-
-                                    Transactions transactions = Transactions.getInstance();
-                                    transactions.populate(instance);
-                                    transactions.addTransactionDataChangedListeners(transactionsMap -> notifyTransactionDataChangedListeners(transactionsMap));
-
-                                    Members members = Members.getInstance();
-                                    members.populate(instance);
-                                    members.addMemberDataChangedListeners(membersMap -> notifyMemberDataChangedListeners(membersMap));
-
-                                    Cleaning cleaning = Cleaning.getInstance();
-                                    cleaning.populate(instance);
-                                    cleaning.addCleaningDataChangedListeners(new CleaningDataListener() {
-                                        @Override
-                                        public void onCleaningDataChanged(HashMap<String, CleaningWeek> cleaningMap) {
-                                            notifyCleaningDataChangedListeners(cleaningMap);
-                                        }
-
-                                        @Override
-                                        public void onDutyDataChanged(HashMap<String, Duty> dutiesMap) {
-                                            notifyDutyDataChangedListeners(dutiesMap);
-                                        }
-                                    });
-
-                                    Calendar calendar = Calendar.getInstance();
-                                    calendar.populate(instance);
-                                    calendar.addCalendarDataChangedListeners(calendarMap -> notifyCalendarDataChangedListeners(calendarMap));
-
-                                    ShoppingList shoppingList = ShoppingList.getInstance();
-                                    shoppingList.populate(instance);
-                                    shoppingList.addShoppingListDataChangedListeners(shoppingListMap -> notifyShoppingListDataChangedListeners(shoppingListMap));
-                                }
-                            }
-                        }
-                    }
-                }
+            public void onCleaningDataChanged(HashMap<String, CleaningWeek> cleaningMap) {
+                notifyCleaningDataChangedListeners(cleaningMap);
             }
+
             @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e(GROUP_TAG, "failed to read user and group id", error.toException());
+            public void onDutyDataChanged(HashMap<String, Duty> dutiesMap) {
+                notifyDutyDataChangedListeners(dutiesMap);
             }
         });
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.populate(groupId);
+        calendar.addCalendarDataChangedListeners(calendarMap -> notifyCalendarDataChangedListeners(calendarMap));
+
+        ShoppingList shoppingList = ShoppingList.getInstance();
+        shoppingList.populate(groupId);
+        shoppingList.addShoppingListDataChangedListeners(shoppingListMap -> notifyShoppingListDataChangedListeners(shoppingListMap));
     }
 
     public static Group getInstance() {
@@ -197,5 +179,22 @@ public class Group {
                 .limit(length)
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
+    }
+
+    public void leave(User user) {
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+        database.getReference("groups/" + user.getGroupId() + "/members/" + user.getId()).removeValue();
+
+        user.setGroupId("");
+
+        database.getReference("users/" + user.getId()).setValue(user, (databaseError, databaseReference) -> {
+            Transactions.clear();
+            Members.clear();
+            Cleaning.clear();
+            Calendar.clear();
+            ShoppingList.clear();
+            Users.clear();
+        });
     }
 }

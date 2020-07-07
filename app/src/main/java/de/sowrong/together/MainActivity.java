@@ -135,6 +135,7 @@ public class MainActivity extends AppCompatActivity {
                                 createNewOrJoinGroupInterface();
                             } else {
                                 joinedGroup = true;
+                                Group.getInstance().populate(user.getGroupId());
                                 createDefaultInterface();
                             }
                         }
@@ -336,7 +337,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             case R.id.action_logout:
                 signOutAccount();
-                joinedGroup = false;
                 return true;
             case R.id.action_settings:
                 Intent intent = new Intent(context, SettingsActivity.class);
@@ -349,15 +349,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void leaveGroup() {
         User self = Users.getInstance().getUserById(Users.getOwnId());
-
         joinedGroup = false;
-
         if (self != null) {
-            self.setGroupId("");
-
-            final FirebaseDatabase database = FirebaseDatabase.getInstance();
-            DatabaseReference ref = database.getReference("users/" + self.getId());
-            ref.setValue(self);
+            Group.getInstance().leave(self);
         }
 
         onResume();
@@ -390,6 +384,8 @@ public class MainActivity extends AppCompatActivity {
                         createSignInIntent();
                     }
                 });
+
+        joinedGroup = false;
     }
 
     public void deleteAccount() {

@@ -38,10 +38,6 @@ public class WalletFragment extends Fragment {
 
             String userId = Group.getInstance().getOwnUserId();
 
-            Log.d("WalletFragment", "called observe");
-            Log.d("WalletFragment", "#elements: " + membersMap.size());
-            Log.d("WalletFragment", "userId: " + userId);
-
             if (membersMap.isEmpty() || !membersMap.containsKey(userId))
                 return;
 

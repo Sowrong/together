@@ -14,7 +14,7 @@ public class WalletViewModel extends ViewModel {
     public WalletViewModel() {
         members = new MutableLiveData<>();
         members.setValue(Members.getInstance().getMembersMap());
-        Group.getInstance().addMemberDataChangedListeners(members::setValue);
+        Group.getInstance().addMemberDataChangedListeners(value -> members.setValue(value));
     }
 
     public LiveData<HashMap<String, Member>> getMembers() {

@@ -18,6 +18,17 @@ public class Transactions {
     private static Transactions instance;
     private static HashMap<String, Transaction> transactionMap;
     private static ArrayList<TransactionDataListener> transactionDataListeners;
+    private static DatabaseReference databaseReference;
+    private static ValueEventListener valueEventListener;
+
+    public static void clear() {
+        if (databaseReference != null)
+            databaseReference.removeEventListener(valueEventListener);
+        valueEventListener = null;
+        transactionMap = new HashMap<>();
+        transactionDataListeners = new ArrayList<>();
+        instance = null;
+    }
 
     public Transactions() {
         transactionMap = new HashMap<>();
@@ -72,6 +83,7 @@ public class Transactions {
                     }
                 }
             }
+
             @Override
             public void onCancelled(DatabaseError error) {
                 Log.e(TRANSACTIONS_TAG, "failed to read transactions data", error.toException());
@@ -79,13 +91,13 @@ public class Transactions {
         };
     }
 
-    void populate(Group group) {
-        String groupId = group.getGroupId();
+    void populate(String groupId) {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
 
-        DatabaseReference ref = database.getReference("groups/" + Group.getInstance().getGroupId() + "/transactions");
-        ref.addListenerForSingleValueEvent(getTransactionEventListener(groupId));
-        ref.addValueEventListener(getTransactionEventListener(groupId));
+        databaseReference = database.getReference("groups/" + Group.getInstance().getGroupId() + "/transactions");
+        valueEventListener = getTransactionEventListener(groupId);
+        databaseReference.addListenerForSingleValueEvent(valueEventListener);
+        databaseReference.addValueEventListener(valueEventListener);
     }
 
     public static HashMap<String, Transaction> getShoppingListMap() {

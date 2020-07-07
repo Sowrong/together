@@ -17,22 +17,32 @@ public class Users {
     private static Users instance;
     private static HashMap<String, User> usersMap;
     private static String ownId;
-    private static ArrayList<UserDataListener> listeners;
+    private static ArrayList<UserDataListener> userListeners;
+    public static DatabaseReference usersDatabaseReference;
+    public static ValueEventListener usersValueEventListener;
 
     private final String DB_CONNECTOR_TAG = "data/Users";
+
+
+    public static void clear() {
+        if (usersDatabaseReference != null)
+            usersDatabaseReference.removeEventListener(usersValueEventListener);
+        usersMap = null;
+        userListeners = null;
+        instance = null;
+    }
 
     public Users() {
         ownId = "";
         usersMap = new HashMap<>();
-        listeners = new ArrayList<>();
+        userListeners = new ArrayList<>();
 
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        FirebaseDatabase db = FirebaseDatabase.getInstance();
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
 
-        DatabaseReference usersReference = db.getReference().child("users");
-
-        ValueEventListener valueEventListener = new ValueEventListener() {
+        usersDatabaseReference = database.getReference("users");
+        usersValueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot != null) {
@@ -51,7 +61,6 @@ public class Users {
                     notifyUserDataChangedListeners(usersMap);
                     Log.d(DB_CONNECTOR_TAG, "users updated");
                 }
-
             }
 
             @Override
@@ -60,8 +69,8 @@ public class Users {
             }
         };
 
-        usersReference.addListenerForSingleValueEvent(valueEventListener);
-        usersReference.addValueEventListener(valueEventListener);
+        usersDatabaseReference.addListenerForSingleValueEvent(usersValueEventListener);
+        usersDatabaseReference.addValueEventListener(usersValueEventListener);
     }
 
     public static String getOwnId() {
@@ -93,16 +102,16 @@ public class Users {
 
     public void addUserDataChangedListeners(UserDataListener listener) {
         // Add the listener to the list of registered listeners
-        listeners.add(listener);
+        userListeners.add(listener);
     }
     public void removeUserDataChangedListeners(UserDataListener listener) {
         // Remove the listener from the list of the registered listeners
-        listeners.remove(listener);
+        userListeners.remove(listener);
     }
 
     protected void notifyUserDataChangedListeners(HashMap<String, User> userList) {
         // Notify each of the listeners in the list of registered listeners
-        for (UserDataListener listener : this.listeners) {
+        for (UserDataListener listener : this.userListeners) {
             listener.onUserDataChanged(userList);
         }
     }

@@ -18,6 +18,17 @@ public class Calendar {
     private static HashMap<String, CalendarEntry> calendarMap;
     private static ArrayList<CalendarDataListener> calendarDataListeners;
 
+    private static DatabaseReference calendarDatabaseReference;
+    private static ValueEventListener calendarValueEventListener;
+
+    public static void clear() {
+        if (calendarDatabaseReference != null)
+            calendarDatabaseReference.removeEventListener(calendarValueEventListener);
+        calendarDataListeners = new ArrayList<>();
+        calendarMap = new HashMap<>();
+        instance = null;
+    }
+
     public Calendar() {
         calendarMap = new HashMap<>();
         calendarDataListeners = new ArrayList<>();
@@ -82,14 +93,13 @@ public class Calendar {
         };
     }
 
-    void populate(Group group) {
-        String groupId = group.getGroupId();
-
+    void populate(String groupId) {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
 
-        DatabaseReference ref = database.getReference("groups/" + Group.getInstance().getGroupId() + "/calendar");
-        ref.addListenerForSingleValueEvent(getCalendarEventListener(groupId));
-        ref.addValueEventListener(getCalendarEventListener(groupId));
+        calendarDatabaseReference = database.getReference("groups/" + groupId + "/calendar");
+        calendarValueEventListener = getCalendarEventListener(groupId);
+        calendarDatabaseReference.addListenerForSingleValueEvent(calendarValueEventListener);
+        calendarDatabaseReference.addValueEventListener(calendarValueEventListener);
     }
 
     public void addCalendarDataChangedListeners(CalendarDataListener listener) {

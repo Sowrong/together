@@ -22,6 +22,28 @@ public class Cleaning {
 
     private static ArrayList<CleaningDataListener> cleaningDataListeners;
 
+    private static ValueEventListener dutiesValueEventListener;
+    private static ValueEventListener cleaningWeeksValueEventListener;
+    private static DatabaseReference dutiesDatabaseReference;
+    private static DatabaseReference cleaningWeeksDatabaseReference;
+
+    public static void clear() {
+        if (dutiesDatabaseReference != null)
+            dutiesDatabaseReference.removeEventListener(dutiesValueEventListener);
+        if (cleaningWeeksDatabaseReference != null)
+            cleaningWeeksDatabaseReference.removeEventListener(cleaningWeeksValueEventListener);
+        dutiesValueEventListener = null;
+        cleaningWeeksValueEventListener = null;
+        dutiesDatabaseReference = null;
+        cleaningWeeksDatabaseReference = null;
+
+        cleaningMap = new HashMap<>();
+        dutiesMap = new HashMap<>();
+        cleaningDataListeners = new ArrayList<>();
+
+        instance = null;
+    }
+
     public Cleaning() {
         dutiesMap = new HashMap<>();
         cleaningMap = new HashMap<>();
@@ -103,17 +125,17 @@ public class Cleaning {
         };
     }
 
-    void populate(Group group) {
-        String groupId = group.getGroupId();
-
+    void populate(String groupId) {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference refDuties = database.getReference("groups/" + Group.getInstance().getGroupId() + "/cleaning/duties");
-        refDuties.addListenerForSingleValueEvent(getDutyListener(groupId));
-        refDuties.addValueEventListener(getDutyListener(groupId));
+        dutiesDatabaseReference = database.getReference("groups/" + Group.getInstance().getGroupId() + "/cleaning/duties");
+        dutiesValueEventListener = getDutyListener(groupId);
+        dutiesDatabaseReference.addListenerForSingleValueEvent(dutiesValueEventListener);
+        dutiesDatabaseReference.addValueEventListener(dutiesValueEventListener);
 
-        DatabaseReference refCleaningWeeks = database.getReference("groups/" + Group.getInstance().getGroupId() + "/cleaning/weeks");
-        refCleaningWeeks.addListenerForSingleValueEvent(getCleaningEventListener(groupId));
-        refCleaningWeeks.addValueEventListener(getCleaningEventListener(groupId));
+        cleaningWeeksDatabaseReference = database.getReference("groups/" + Group.getInstance().getGroupId() + "/cleaning/weeks");
+        cleaningWeeksValueEventListener = getCleaningEventListener(groupId);
+        cleaningWeeksDatabaseReference.addListenerForSingleValueEvent(cleaningWeeksValueEventListener);
+        cleaningWeeksDatabaseReference.addValueEventListener(cleaningWeeksValueEventListener);
     }
 
     public void addCleaningDataChangedListeners(CleaningDataListener listener) {

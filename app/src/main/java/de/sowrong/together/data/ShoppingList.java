@@ -6,7 +6,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -17,6 +16,17 @@ public class ShoppingList {
     private static ShoppingList instance;
     private static HashMap<String, ShoppingListEntry> shoppingListMap;
     private static ArrayList<ShoppingListDataListener> shoppingListDataListeners;
+
+    private static DatabaseReference shoppingListDatabaseReference;
+    private static ValueEventListener shoppingListValueEventListener;
+
+    public static void clear() {
+        if (shoppingListDatabaseReference != null)
+            shoppingListDatabaseReference.removeEventListener(shoppingListValueEventListener);
+        shoppingListMap = new HashMap<>();
+        shoppingListDataListeners = new ArrayList<>();
+        instance = null;
+    }
 
     public ShoppingList() {
         shoppingListMap = new HashMap<>();
@@ -50,14 +60,13 @@ public class ShoppingList {
         };
     }
 
-    void populate(Group group) {
-        String groupId = group.getGroupId();
-
+    void populate(String groupId) {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
 
-        DatabaseReference ref = database.getReference("groups/" + Group.getInstance().getGroupId() + "/shoppingList");
-        ref.addListenerForSingleValueEvent(getShoppingListEventListener(groupId));
-        ref.addValueEventListener(getShoppingListEventListener(groupId));
+        shoppingListDatabaseReference = database.getReference("groups/" + Group.getInstance().getGroupId() + "/shoppingList");
+        shoppingListValueEventListener = getShoppingListEventListener(groupId);
+        shoppingListDatabaseReference.addListenerForSingleValueEvent(shoppingListValueEventListener);
+        shoppingListDatabaseReference.addValueEventListener(shoppingListValueEventListener);
     }
 
     public static HashMap<String, ShoppingListEntry> getShoppingListMap() {
