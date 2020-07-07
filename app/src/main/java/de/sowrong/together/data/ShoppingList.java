@@ -90,11 +90,9 @@ public class ShoppingList {
         shoppingListMap.remove(id);
     }
 
-    public boolean syncShoppingList() {
+    public void syncShoppingList() {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference ref = database.getReference("groups/" + Group.getInstance().getGroupId() + "/shoppingList");
         ref.setValue(shoppingListMap);
-
-        return true;
     }
 }

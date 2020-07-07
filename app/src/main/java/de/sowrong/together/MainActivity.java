@@ -15,6 +15,7 @@ import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.ScaleAnimation;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
@@ -180,6 +181,15 @@ public class MainActivity extends AppCompatActivity {
         toggle.syncState();
 
         navigationView = findViewById(R.id.nav_view);
+
+        Users.getInstance().addUserDataChangedListeners(usersMap -> {
+            FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+            String username = usersMap.get(firebaseUser.getUid()).getName();
+            String email = firebaseUser.getEmail();
+
+            ((TextView) navigationView.findViewById(R.id.navNameTextView)).setText(username);
+            ((TextView) navigationView.findViewById(R.id.navEmailTextView)).setText(email);
+        });
 
         navigationView.setNavigationItemSelectedListener((NavigationView.OnNavigationItemSelectedListener) item -> {
             item.setChecked(true);

@@ -12,11 +12,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -29,6 +31,9 @@ import de.sowrong.together.data.Cleaning;
 import de.sowrong.together.data.CleaningWeek;
 import de.sowrong.together.data.Duty;
 import de.sowrong.together.data.Group;
+import de.sowrong.together.data.Member;
+import de.sowrong.together.data.Members;
+import de.sowrong.together.data.Users;
 
 public class SettingsActivity extends AppCompatActivity {
     final String prefix = "ic_task_";
@@ -37,96 +42,116 @@ public class SettingsActivity extends AppCompatActivity {
     ArrayList<String> taskNames;
     ArrayList<Pair<Duty, View>> dutiesViews;
     int numberDuties;
+    boolean isAdmin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        dutiesViews = new ArrayList<>();
-        iconMap = new HashMap<>();
-
-        HashMap<String, Duty> dutiesMap = Cleaning.getInstance().getDutiesMap();
-        numberDuties = dutiesMap.size();
-
         setContentView(R.layout.activity_settings);
 
-        Field[] drawables = de.sowrong.together.R.drawable.class.getFields();
+        Member self = Members.getInstance().getMemberMap().get(Users.getOwnId());
+        String role = self.getRole();
 
-        HashMap<String, Drawable> allResources = new HashMap<>();
+        EditText usernameTextView = findViewById(R.id.editTextUsername);
+        usernameTextView.setText(self.getName());
 
-        for (Field field : drawables) {
-            try {
-                Log.i("LOG_TAG", "com.your.project.R.drawable." + field.getName());
-                allResources.put(field.getName(), getResources().getDrawable(field.getInt(null)));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        isAdmin = role.equals("admin");
 
-        taskResources = allResources.entrySet()
-                .stream()
-                .filter(map -> map.getKey().contains(prefix))
-                .collect(Collectors.toMap(map -> map.getKey().substring(prefix.length()), map -> map.getValue()));
+        if (!isAdmin) {
+            ViewGroup settingsRoot = (ViewGroup) findViewById(R.id.settingsRoot);
+            settingsRoot.removeView(findViewById(R.id.cardViewTasks));
 
-        taskNames = new ArrayList<>(taskResources.keySet());
+            findViewById(R.id.save).setOnClickListener(v -> {
+                Users.getInstance().updateOwnName(usernameTextView.getText().toString());
+                finish();
+            });
+        } else {
+            dutiesViews = new ArrayList<>();
+            iconMap = new HashMap<>();
 
-        findViewById(R.id.leftArrowImageView).setOnClickListener(v -> {
-            if (numberDuties > 0) {
-                numberDuties--;
+            HashMap<String, Duty> dutiesMap = Cleaning.getInstance().getDutiesMap();
+            numberDuties = dutiesMap.size();
 
-                Pair<Duty, View> elementToRemove = dutiesViews.get(dutiesViews.size() - 1);
-                iconMap.remove(elementToRemove.second.findViewById(R.id.spinner));
+            Field[] drawables = de.sowrong.together.R.drawable.class.getFields();
 
-                dutiesViews.remove(elementToRemove);
+            HashMap<String, Drawable> allResources = new HashMap<>();
 
-                redrawDutiesView();
-            }
-        });
-
-        findViewById(R.id.rightArrowImageView).setOnClickListener(v -> {
-            numberDuties++;
-            dutiesViews.add(new Pair(null, createSpinner(null)));
-
-            redrawDutiesView();
-        });
-
-        findViewById(R.id.save).setOnClickListener(v -> {
-            HashMap<String, Duty> newDutiesMap = new HashMap<>();
-
-            dutiesViews.forEach(dutyViewPair -> {
-                Duty duty = dutyViewPair.first;
-                View dutyView = dutyViewPair.second;
-
-                if (duty == null) {
-                    duty = new Duty();
-                    duty.setId(Group.randomId(8));
+            for (Field field : drawables) {
+                try {
+                    Log.i("LOG_TAG", "com.your.project.R.drawable." + field.getName());
+                    allResources.put(field.getName(), getResources().getDrawable(field.getInt(null)));
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+            }
 
-                Spinner spinner = dutyView.findViewById(R.id.spinner);
-                TextView titleTextView = dutyView.findViewById(R.id.editTextName);
+            taskResources = allResources.entrySet()
+                    .stream()
+                    .filter(map -> map.getKey().contains(prefix))
+                    .collect(Collectors.toMap(map -> map.getKey().substring(prefix.length()), map -> map.getValue()));
 
-                duty.setIcon(prefix + taskNames.get(spinner.getSelectedItemPosition()));
-                duty.setTitle(titleTextView.getText().toString());
+            taskNames = new ArrayList<>(taskResources.keySet());
 
-                newDutiesMap.put(duty.getId(), duty);
+            findViewById(R.id.leftArrowImageView).setOnClickListener(v -> {
+                if (numberDuties > 0) {
+                    numberDuties--;
+
+                    Pair<Duty, View> elementToRemove = dutiesViews.get(dutiesViews.size() - 1);
+                    iconMap.remove(elementToRemove.second.findViewById(R.id.spinner));
+
+                    dutiesViews.remove(elementToRemove);
+
+                    redrawDutiesView();
+                }
             });
 
-            Cleaning cleaningInstance = Cleaning.getInstance();
+            findViewById(R.id.rightArrowImageView).setOnClickListener(v -> {
+                numberDuties++;
+                dutiesViews.add(new Pair(null, createSpinner(null)));
 
-            cleaningInstance.setCleaningMap(newDutiesMap);
-            cleaningInstance.deleteCurrentWeek();
+                redrawDutiesView();
+            });
 
-            cleaningInstance.syncCleaning();
+            findViewById(R.id.save).setOnClickListener(v -> {
+                HashMap<String, Duty> newDutiesMap = new HashMap<>();
 
-            finish();
-        });
+                dutiesViews.forEach(dutyViewPair -> {
+                    Duty duty = dutyViewPair.first;
+                    View dutyView = dutyViewPair.second;
+
+                    if (duty == null) {
+                        duty = new Duty();
+                        duty.setId(Group.randomId(8));
+                    }
+
+                    Spinner spinner = dutyView.findViewById(R.id.spinner);
+                    TextView titleTextView = dutyView.findViewById(R.id.editTextName);
+
+                    duty.setIcon(prefix + taskNames.get(spinner.getSelectedItemPosition()));
+                    duty.setTitle(titleTextView.getText().toString());
+
+                    newDutiesMap.put(duty.getId(), duty);
+                });
+
+                Cleaning cleaningInstance = Cleaning.getInstance();
+
+                cleaningInstance.setCleaningMap(newDutiesMap);
+                cleaningInstance.deleteCurrentWeek();
+
+                cleaningInstance.syncCleaning();
+
+                Users.getInstance().updateOwnName(usernameTextView.getText().toString());
+                finish();
+            });
 
 
-        dutiesMap.entrySet().forEach(entry -> {
-            Duty duty = entry.getValue();
-            dutiesViews.add(new Pair(duty, createSpinner(duty)));
-        });
+            dutiesMap.entrySet().forEach(entry -> {
+                Duty duty = entry.getValue();
+                dutiesViews.add(new Pair(duty, createSpinner(duty)));
+            });
 
-        redrawDutiesView();
+            redrawDutiesView();
+        }
     }
 
     void redrawDutiesView() {

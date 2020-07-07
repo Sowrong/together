@@ -102,8 +102,18 @@ public class Users {
 
     protected void notifyUserDataChangedListeners(HashMap<String, User> userList) {
         // Notify each of the listeners in the list of registered listeners
-        for (UserDataListener listener: this.listeners) {
+        for (UserDataListener listener : this.listeners) {
             listener.onUserDataChanged(userList);
         }
+    }
+
+    public void updateOwnName(String username) {
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference ref = database.getReference("users/" + ownId);
+
+        User self = usersMap.get(ownId);
+        self.setName(username);
+
+        ref.setValue(self);
     }
 }
