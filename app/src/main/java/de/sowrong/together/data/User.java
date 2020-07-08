@@ -6,8 +6,7 @@ public class User {
     private String id;
     private String groupId;
     private String name;
-
-    //private Image avatar;
+    private String avatar;
 
     public String getId() {
         return id;
@@ -31,5 +30,13 @@ public class User {
 
     public void setGroupId(String groupId) {
         this.groupId = groupId;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
 }

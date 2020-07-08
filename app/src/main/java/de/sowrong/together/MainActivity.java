@@ -3,6 +3,7 @@ package de.sowrong.together;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.ScaleAnimation;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.firebase.ui.auth.AuthUI;
@@ -94,11 +96,15 @@ public class MainActivity extends AppCompatActivity {
     public static final String GOTO_TAB = "de.sowrong.together.GOTO_TAB";
     public static final int TAB_REQUEST_CODE = 42;
 
+    public static FirebaseUser firebaseUser;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         context = this;
         joinedGroup = false;
+
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         //FirebaseDatabase.getInstance().setPersistenceEnabled(true); TODO Enable
     }
 
@@ -107,14 +113,11 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if (!joinedGroup) {
-            FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-
             if (firebaseUser != null) {
                 // User is signed in
                 Log.d("Firebase", "User: " + firebaseUser.getDisplayName() + " is logged in");
 
-                FirebaseDatabase db = FirebaseDatabase.getInstance();
-                DatabaseReference usersReference = db.getReference().child("users/" + firebaseUser.getUid() + "/");
+                DatabaseReference usersReference = FirebaseDatabase.getInstance().getReference().child("users/" + firebaseUser.getUid() + "/");
 
                 usersReference.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -186,13 +189,17 @@ public class MainActivity extends AppCompatActivity {
         navigationView = findViewById(R.id.nav_view);
 
         Users.getInstance().addUserDataChangedListeners(usersMap -> {
-            FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-            String username = usersMap.get(firebaseUser.getUid()).getName();
+            User self = usersMap.get(firebaseUser.getUid());
+            String username = self.getName();
             String email = firebaseUser.getEmail();
+            String avatar = self.getAvatar();
 
             ((TextView) navigationView.findViewById(R.id.navNameTextView)).setText(username);
             ((TextView) navigationView.findViewById(R.id.navEmailTextView)).setText(email);
             ((TextView) navigationView.findViewById(R.id.groupIdTextView)).setText(usersMap.get(firebaseUser.getUid()).getGroupId());
+
+            int avatarId = getResources().getIdentifier("de.sowrong.together:drawable/" + avatar, null, null);
+            ((ImageView) navigationView.findViewById(R.id.imageViewAvatar)).setImageResource(avatarId);
         });
 
         navigationView.setNavigationItemSelectedListener((NavigationView.OnNavigationItemSelectedListener) item -> {
@@ -349,7 +356,6 @@ public class MainActivity extends AppCompatActivity {
                         .signOut(this)
                         .addOnCompleteListener(task -> createSignInIntent());
 
-                onResume();
                 return true;
             case R.id.action_settings:
                 Intent intent = new Intent(context, SettingsActivity.class);
@@ -451,11 +457,10 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (joinedGroup == false) {
+            firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
             onResume();
             return;
-        }
-
-        if (resultCode == Activity.RESULT_OK) {
+        } else if (resultCode == Activity.RESULT_OK) {
             // Get String data from Intent
             String tabIndex = data.getStringExtra(MainActivity.GOTO_TAB);
 

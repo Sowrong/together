@@ -116,12 +116,13 @@ public class Users {
         }
     }
 
-    public void updateOwnName(String username) {
+    public void update(String username, String avatar) {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference ref = database.getReference("users/" + ownId);
 
         User self = usersMap.get(ownId);
         self.setName(username);
+        self.setAvatar(avatar);
 
         ref.setValue(self);
     }

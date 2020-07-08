@@ -4,10 +4,9 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="nav_name">Marco Polo</string>
     <string name="nav_header_subtitle">marco.polo@uni-ulm.de</string>
-    <string name="nav_header_desc">WG Planer</string>
+    <string name="nav_header_desc">together we are strong</string>
     <string name="action_settings">Einstellungen</string>
 
-    <string name="hello_blank_fragment">Hello - </string>
 
     <string name="tab_cleaning">Putzplan</string>
     <string name="tab_calendar">Kalender</string>
