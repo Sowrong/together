@@ -184,8 +184,9 @@ public class Group {
     public void leave(User user) {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
 
+        database.getReference("groups/" + user.getGroupId() + "/member/" + user.getId()).removeValue();
+
         user.setGroupId("");
-        database.getReference("groups/" + user.getGroupId() + "/members/" + user.getId()).removeValue();
         database.getReference("users/" + user.getId()).setValue(user, (databaseError, databaseReference) -> {
             logout(user);
         });

@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -55,7 +56,6 @@ public class SettingsActivity extends AppCompatActivity {
         Member ownMember = Members.getInstance().getMemberMap().get(Users.getOwnId());
         String role = ownMember.getRole();
 
-
         Field[] drawables = de.sowrong.together.R.drawable.class.getFields();
 
         HashMap<String, Drawable> allResources = new HashMap<>();
@@ -81,6 +81,8 @@ public class SettingsActivity extends AppCompatActivity {
                 .collect(Collectors.toMap(map -> map.getKey().substring(avatarPrefix.length()), map -> map.getValue()));
         avatarNames = new ArrayList<>(avatarResources.keySet());
 
+        Collections.sort(avatarNames);
+
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, avatarNames);
 
@@ -100,7 +102,11 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        avatarSpinner.setSelection(avatarNames.indexOf(ownUser.getAvatar().substring(avatarPrefix.length())));
+        String avatarString = ownUser.getAvatar();
+
+        if (avatarString != null && !avatarString.isEmpty()) {
+            avatarSpinner.setSelection(avatarNames.indexOf(ownUser.getAvatar().substring(avatarPrefix.length())));
+        }
 
         EditText usernameTextView = findViewById(R.id.editTextUsername);
         usernameTextView.setText(ownMember.getName());

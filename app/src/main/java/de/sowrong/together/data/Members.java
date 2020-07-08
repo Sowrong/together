@@ -112,6 +112,23 @@ public class Members {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot != null) {
+                    if (dataSnapshot.getChildrenCount() < membersMap.size()) {
+                        membersMap.entrySet().forEach(
+                                member -> {
+                                    if (memberDatabaseReferenceMap != null) {
+                                        DatabaseReference databaseReference = memberDatabaseReferenceMap.get(member.getKey());
+                                        ValueEventListener valueEventListener = memberValueEventListenerMap.get(member.getKey());
+                                        if (databaseReference != null && valueEventListener != null)
+                                            databaseReference.removeEventListener(valueEventListener);
+                                    }
+                                }
+                        );
+
+                        memberDatabaseReferenceMap = new HashMap<>();
+                        memberValueEventListenerMap = new HashMap<>();
+
+                        membersMap.clear();
+                    }
                     for (DataSnapshot roleSnapshot : dataSnapshot.getChildren()) {
                         String userId = roleSnapshot.getKey();
                         Role role = roleSnapshot.getValue(Role.class);
