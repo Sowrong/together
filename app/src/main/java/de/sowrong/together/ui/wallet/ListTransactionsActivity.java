@@ -79,14 +79,17 @@ public class ListTransactionsActivity extends AppCompatActivity {
         itemTextView.setText(transaction.getItem());
         valueTextView.setText(transaction.getValueString() + "€");
 
-        transactionItem.setOnLongClickListener(v -> {
-            Intent intent = new Intent(this, NewEditTransactionActivity.class);
-            String transactionEntryId = transaction.getTransactionEntryId();
-            intent.putExtra(MainActivity.TRANSACTION_ENTRY_ID, transactionEntryId);
-            startActivity(intent);
+        if (transaction.getUserId() == Users.getOwnId()) {
+            transactionItem.setOnLongClickListener(v -> {
+                Intent intent = new Intent(this, NewEditTransactionActivity.class);
+                String transactionEntryId = transaction.getTransactionEntryId();
+                intent.putExtra(MainActivity.TRANSACTION_ENTRY_ID, transactionEntryId);
+                startActivity(intent);
 
-            return false;
-        });
+                return false;
+            });
+        }
+
 
         transactionItem.setMinimumHeight(100);
 
