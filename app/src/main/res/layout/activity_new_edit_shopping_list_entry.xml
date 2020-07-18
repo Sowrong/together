@@ -50,8 +50,7 @@
                     android:gravity="center_vertical|left"
                     android:singleLine="true"
                     android:textColor="@color/darkGrey"
-                    android:textSize="20sp"
-                    android:inputType="textMultiLine" />
+                    android:textSize="20sp" />
             </LinearLayout>
 
         </LinearLayout>

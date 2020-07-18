@@ -1,6 +1,8 @@
 package de.sowrong.together;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -18,6 +20,7 @@ import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
@@ -196,7 +199,17 @@ public class MainActivity extends AppCompatActivity {
 
             ((TextView) navigationView.findViewById(R.id.navNameTextView)).setText(username);
             ((TextView) navigationView.findViewById(R.id.navEmailTextView)).setText(email);
-            ((TextView) navigationView.findViewById(R.id.groupIdTextView)).setText(usersMap.get(firebaseUser.getUid()).getGroupId());
+
+            String groupId = usersMap.get(firebaseUser.getUid()).getGroupId();
+            TextView groupIdTextView = navigationView.findViewById(R.id.groupIdTextView);
+
+            groupIdTextView.setText(groupId);
+            groupIdTextView.setOnClickListener(v -> {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("GroupID", groupId);
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(context, "Gruppen ID kopiert", Toast.LENGTH_SHORT).show();
+            });
 
             int avatarId = getResources().getIdentifier("de.sowrong.together:drawable/" + avatar, null, null);
             ((ImageView) navigationView.findViewById(R.id.imageViewAvatar)).setImageResource(avatarId);

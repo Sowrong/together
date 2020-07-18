@@ -40,6 +40,7 @@ import de.sowrong.together.data.Cleaning;
 import de.sowrong.together.data.CleaningWeek;
 import de.sowrong.together.data.CleaningWeekUserTask;
 import de.sowrong.together.data.Duty;
+import de.sowrong.together.data.Group;
 import de.sowrong.together.data.Member;
 import de.sowrong.together.data.Members;
 import de.sowrong.together.data.Transaction;
@@ -177,8 +178,7 @@ public class CleaningFragment extends Fragment {
                                 if (dutiesMap != null && dutiesMap.size() > 0 && dutiesMap.containsKey(userTask.getDutyId())) {
                                     Duty duty = dutiesMap.get(userTask.getDutyId());
                                     if (duty != null) {
-                                        boolean finished = userTask.isFinished();
-                                        cleaningGroup.addView(createCleaningItem(inflater, userTask, duty, finished));
+                                        cleaningGroup.addView(createCleaningItem(inflater, userTask, duty, selectedWeekData.getValue()));
                                     }
                                 }
                             }
@@ -188,31 +188,41 @@ public class CleaningFragment extends Fragment {
 
     public void fabClickListener() {
         // goto current week
-        setDisplayTimeToNow();
+        if (!CleaningWeek.getCurrentWeekString().equals(CleaningWeek.getWeekStringFromLocalDate(displayDateTime))) {
+            setDisplayTimeToNow();
+        } else {
+            // mark all own events as done
+            cleaningMap.entrySet().stream()
+                    .filter(element -> {
+                        String displayWeekString = CleaningWeek.getWeekStringFromLocalDate(displayDateTime);
+                        String listElementWeekString = CleaningWeek.getWeekStringFromLocalDate(element.getValue().getDate());
+                        return displayWeekString.equals(listElementWeekString);
+                    })
+                    .forEach(selectedWeekData -> {
+                        HashMap<String, CleaningWeekUserTask> userTasks = selectedWeekData.getValue().getUserTasks();
 
-        // mark all own events as done
-        cleaningMap.entrySet().stream()
-                .filter(element -> {
-                    String displayWeekString = CleaningWeek.getWeekStringFromLocalDate(displayDateTime);
-                    String listElementWeekString = CleaningWeek.getWeekStringFromLocalDate(element.getValue().getDate());
-                    return displayWeekString.equals(listElementWeekString);
-                })
-                .forEach(selectedWeekData -> {
-                    HashMap<String, CleaningWeekUserTask> userTasks = selectedWeekData.getValue().getUserTasks();
-                    userTasks.entrySet().stream().forEach(
-                            userTaskEntry -> {
-                                if (userTaskEntry.getValue().getUserId().equals(Users.getOwnId())) {
-                                    boolean oldFinishedValue = userTaskEntry.getValue().isFinished();
-                                    userTaskEntry.getValue().setFinished(!oldFinishedValue);
-                                }
-                            });
-                });
+                        boolean allDone = userTasks.entrySet().stream().allMatch(userTaskEntry -> {
+                            if (userTaskEntry.getValue().getUserId().equals(Users.getOwnId())) {
+                                return userTaskEntry.getValue().isFinished();
+                            } else {
+                                return true;
+                            }
+                        });
+
+                        userTasks.entrySet().stream().forEach(
+                                userTaskEntry -> {
+                                    if (userTaskEntry.getValue().getUserId().equals(Users.getOwnId())) {
+                                        userTaskEntry.getValue().setFinished(!allDone);
+                                    }
+                                });
+                    });
+            Cleaning.getInstance().syncCleaning();
+        }
 
         redrawCleaningList();
-        Cleaning.getInstance().syncCleaning();
     }
 
-    private View createCleaningItem(LayoutInflater inflater, CleaningWeekUserTask userTask, Duty duty, boolean done) {
+    private View createCleaningItem(LayoutInflater inflater, CleaningWeekUserTask userTask, Duty duty, CleaningWeek cleaningWeek) {
         View cleaningItem = inflater.inflate(R.layout.cleaning_item, null);
         ImageView iconView = cleaningItem.findViewById(R.id.icon);
         TextView nameView = cleaningItem.findViewById(R.id.name);
@@ -234,7 +244,18 @@ public class CleaningFragment extends Fragment {
         nameView.setText(username);
         dutyNameView.setText(dutyName);
 
-        setDone(cleaningItem, done);
+        if (userId.equals(Group.getOwnUserId())) {
+            cleaningItem.setOnClickListener(v -> {
+                boolean toggledFinished = !userTask.isFinished();
+
+                userTask.setFinished(toggledFinished);
+                setDone(cleaningItem, toggledFinished);
+
+                cleaningWeek.save();
+            });
+        }
+
+        setDone(cleaningItem, userTask.isFinished());
 
         /*
         // it would have been nice to be able to click on each task individually,
