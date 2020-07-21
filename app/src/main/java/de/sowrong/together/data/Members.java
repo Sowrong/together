@@ -2,6 +2,7 @@ package de.sowrong.together.data;
 
 import android.util.Log;
 
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -18,7 +19,7 @@ public class Members {
     private static ArrayList<MemberDataListener> memberDataListener;
 
     private static DatabaseReference membersDatabaseReference;
-    private static ValueEventListener membersValueEventListener;
+    private static ChildEventListener childEventListener;
 
     private static HashMap<String, DatabaseReference> memberDatabaseReferenceMap;
     private static HashMap<String, ValueEventListener> memberValueEventListenerMap;
@@ -34,13 +35,13 @@ public class Members {
                     }
                 }
         );
-        membersDatabaseReference.removeEventListener(membersValueEventListener);
+        membersDatabaseReference.removeEventListener(childEventListener);
         memberDatabaseReferenceMap = new HashMap<>();
         memberValueEventListenerMap = new HashMap<>();
         membersMap = new HashMap<>();
         memberDataListener = new ArrayList<>();
         membersDatabaseReference = null;
-        membersValueEventListener = null;
+        childEventListener = null;
         instance = null;
     }
 
@@ -91,29 +92,48 @@ public class Members {
         return memberValueEventListenerMap.get(userId);
     }
 
-    void addMember(String userId, String role) {
-        final FirebaseDatabase database = FirebaseDatabase.getInstance();
-
-        DatabaseReference databaseReference = database.getReference("users/" + userId);
-        ValueEventListener valueEventListener = getMemberEventListener(userId, role);
-
-        databaseReference.addListenerForSingleValueEvent(valueEventListener);
-        databaseReference.addValueEventListener(valueEventListener);
-
-        memberDatabaseReferenceMap.put(userId, databaseReference);
-        memberValueEventListenerMap.put(userId, valueEventListener);
-    }
-
     void populate(String groupId) {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
 
         membersDatabaseReference = database.getReference("groups/" + groupId + "/member");
-        membersValueEventListener = new ValueEventListener() {
+
+        childEventListener = new ChildEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot != null) {
-                    if (dataSnapshot.getChildrenCount() < membersMap.size()) {
-                        membersMap.entrySet().forEach(
+            public void onChildAdded(DataSnapshot dataSnapshot, String prevChildKey) {
+                String userId = dataSnapshot.getKey();
+                Role role = dataSnapshot.getValue(Role.class);
+
+                if (!membersMap.containsKey(userId)) {
+                    DatabaseReference databaseReference = database.getReference("users/" + userId);
+                    ValueEventListener valueEventListener = getMemberEventListener(userId, role.getRole());
+
+                    databaseReference.addListenerForSingleValueEvent(valueEventListener);
+                    databaseReference.addValueEventListener(valueEventListener);
+
+                    memberDatabaseReferenceMap.put(userId, databaseReference);
+                    memberValueEventListenerMap.put(userId, valueEventListener);
+                }
+
+                notifyMemberDataChangedListeners(membersMap);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String prevChildKey) {
+                String userId = dataSnapshot.getKey();
+                Role role = dataSnapshot.getValue(Role.class);
+
+                Member member = membersMap.get(userId);
+                member.setRole(role.getRole());
+
+                notifyMemberDataChangedListeners(membersMap);
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                String removedMemberId = dataSnapshot.getKey();
+
+                membersMap.entrySet().stream().filter(member -> member.getKey().equals(removedMemberId))
+                        .forEach(
                                 member -> {
                                     if (memberDatabaseReferenceMap != null) {
                                         DatabaseReference databaseReference = memberDatabaseReferenceMap.get(member.getKey());
@@ -124,32 +144,24 @@ public class Members {
                                 }
                         );
 
-                        memberDatabaseReferenceMap = new HashMap<>();
-                        memberValueEventListenerMap = new HashMap<>();
+                memberDatabaseReferenceMap.remove(removedMemberId);
+                memberValueEventListenerMap.remove(removedMemberId);
 
-                        membersMap.clear();
-                    }
-                    for (DataSnapshot roleSnapshot : dataSnapshot.getChildren()) {
-                        String userId = roleSnapshot.getKey();
-                        Role role = roleSnapshot.getValue(Role.class);
+                membersMap.remove(removedMemberId);
 
-                        if (!membersMap.containsKey(userId)) {
-                            addMember(userId, role.getRole());
-                        }
-                    }
-
-                    notifyMemberDataChangedListeners(membersMap);
-                }
+                notifyMemberDataChangedListeners(membersMap);
             }
 
             @Override
-            public void onCancelled(DatabaseError error) {
-                Log.e(MEMBERS_TAG, "failed to read user and group id", error.toException());
+            public void onChildMoved(DataSnapshot dataSnapshot, String prevChildKey) {
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
             }
         };
 
-        membersDatabaseReference.addListenerForSingleValueEvent(membersValueEventListener);
-        membersDatabaseReference.addValueEventListener(membersValueEventListener);
+        membersDatabaseReference.addChildEventListener(childEventListener);
 
         Transactions.getInstance().addTransactionDataChangedListeners(transactionMap -> updateBalances(transactionMap));
     }
@@ -194,7 +206,7 @@ public class Members {
 
     protected void notifyMemberDataChangedListeners(HashMap<String, Member> memberDataList) {
         // Notify each of the listeners in the list of registered listeners
-        for (MemberDataListener listener : this.memberDataListener) {
+        for (MemberDataListener listener : memberDataListener) {
             listener.onMemberDataChanged(memberDataList);
         }
     }
